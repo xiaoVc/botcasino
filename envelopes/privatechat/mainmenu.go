@@ -18,12 +18,12 @@ type Handler interface {
 	Handle(*methods.BotExt, *history.History, *types.Update)
 }
 
-// MainMenu 主菜单
-type MainMenu struct {
+// MainMenuHandler 主菜单
+type MainMenuHandler struct {
 }
 
 // Handle 消息处理
-func (menu *MainMenu) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
+func (handler *MainMenuHandler) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
 	if bot == nil || r == nil {
 		return
 	}
@@ -42,17 +42,17 @@ func (menu *MainMenu) Handle(bot *methods.BotExt, r *history.History, update *ty
 
 		// 子菜单处理请求
 		if update.Message.Text != "/start" && callback != nil {
-			handler := menu.route(bot, callback.CallbackQuery)
-			if handler == nil {
+			newHandler := handler.route(bot, callback.CallbackQuery)
+			if newHandler == nil {
 				r.Clear()
 				return
 			}
-			handler.Handle(bot, r.Push(update), callback)
+			newHandler.Handle(bot, r.Push(update), callback)
 			return
 		}
 
 		// 发送菜单列表
-		reply, menus := menu.replyMessage(update.Message.From.ID)
+		reply, menus := handler.replyMessage(update.Message.From.ID)
 		markup := methods.MakeInlineKeyboardMarkup(menus, 2, 2, 2, 1)
 		bot.SendMessage(update.Message.Chat.ID, reply, true, markup)
 		r.Clear()
@@ -66,63 +66,63 @@ func (menu *MainMenu) Handle(bot *methods.BotExt, r *history.History, update *ty
 	// 回复主菜单
 	if update.CallbackQuery.Data == "/main/" {
 		bot.AnswerCallbackQuery(update.CallbackQuery, "", false, "", 0)
-		reply, menus := menu.replyMessage(update.CallbackQuery.From.ID)
+		reply, menus := handler.replyMessage(update.CallbackQuery.From.ID)
 		markup := methods.MakeInlineKeyboardMarkup(menus, 2, 2, 2, 1)
 		bot.EditMessageReplyMarkup(update.CallbackQuery.Message, reply, true, markup)
 		return
 	}
 
 	// 路由到其它处理模块
-	handler := menu.route(bot, update.CallbackQuery)
-	if handler == nil {
+	newHandler := handler.route(bot, update.CallbackQuery)
+	if newHandler == nil {
 		return
 	}
-	handler.Handle(bot, r, update)
+	newHandler.Handle(bot, r, update)
 }
 
 // 消息路由
-func (menu *MainMenu) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
+func (handler *MainMenuHandler) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
 	// 发放红包
 	if strings.HasPrefix(query.Data, "/give/") {
-		return &Give{}
+		return new(GiveHandler)
 	}
 
 	// 使用说明
 	if strings.HasPrefix(query.Data, "/usage/") {
-		return &Usage{}
+		return new(UsageHandler)
 	}
 
 	// 机器人评分
 	if strings.HasPrefix(query.Data, "/rate/") {
-		return &RateBot{}
+		return new(RateBotHandler)
 	}
 
 	// 分享机器人
 	if strings.HasPrefix(query.Data, "/share/") {
-		return &ShareBot{}
+		return new(ShareBotHandler)
 	}
 
 	// 操作历史记录
 	if strings.HasPrefix(query.Data, "/history/") {
-		return &History{}
+		return new(HistoryHandler)
 	}
 
 	// 存款锚定资产
 	if strings.HasPrefix(query.Data, "/deposit/") {
-		return &Deposit{}
+		return new(DepositHandler)
 	}
 
 	// 提现锚定资产
 	if strings.HasPrefix(query.Data, "/withdraw/") {
-		return &Withdraw{}
+		return new(WithdrawHandler)
 	}
 	return nil
 }
 
 // 获取用户资产数量
 func getUserAssetAmount(userID int64, asset string) string {
-	handler := storage.AssetStorage{}
-	assetInfo, err := handler.GetAsset(userID, asset)
+	newHandler := storage.AssetStorage{}
+	assetInfo, err := newHandler.GetAsset(userID, asset)
 	if err != nil {
 		if err != storage.ErrNoBucket && err != storage.ErrNoSuchTypeAsset {
 			logger.Warnf("Failed to get user asset, %v, %v, %v", userID, asset, err)
@@ -133,7 +133,7 @@ func getUserAssetAmount(userID int64, asset string) string {
 }
 
 // 获取回复消息
-func (menu *MainMenu) replyMessage(userID int64) (string, []methods.InlineKeyboardButton) {
+func (handler *MainMenuHandler) replyMessage(userID int64) (string, []methods.InlineKeyboardButton) {
 	// 获取资产信息
 	bitCNY := getUserAssetAmount(userID, storage.BitCNYSymbol)
 	bitUSD := getUserAssetAmount(userID, storage.BitUSDSymbol)

@@ -55,8 +55,8 @@ func init() {
 	}
 }
 
-// Withdraw 取款
-type Withdraw struct {
+// WithdrawHandler 取款
+type WithdrawHandler struct {
 }
 
 // 取款信息
@@ -67,14 +67,14 @@ type withdrawInfo struct {
 }
 
 // Handle 消息处理
-func (withdraw *Withdraw) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
+func (handler *WithdrawHandler) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
 	// 处理选择资产
 	data := update.CallbackQuery.Data
 	if data == "/withdraw/" {
 		r.Clear()
 		dynamicCfg := config.GetDynamic()
 		if dynamicCfg.AllowWithdraw {
-			withdraw.handleChooseAsset(bot, update.CallbackQuery)
+			handler.handleChooseAsset(bot, update.CallbackQuery)
 		} else {
 			// 未开放提现
 			fromID := update.CallbackQuery.From.ID
@@ -89,7 +89,7 @@ func (withdraw *Withdraw) Handle(bot *methods.BotExt, r *history.History, update
 	result := reMathWithdrawAsset.FindStringSubmatch(data)
 	if len(result) == 2 {
 		info.asset = result[1]
-		withdraw.handleWithdrawAmount(bot, r, &info, update)
+		handler.handleWithdrawAmount(bot, r, &info, update)
 		return
 	}
 
@@ -99,7 +99,7 @@ func (withdraw *Withdraw) Handle(bot *methods.BotExt, r *history.History, update
 		info.asset = result[1]
 		amount, _ := strconv.ParseFloat(result[2], 10)
 		info.amount = uint32(amount * 100)
-		withdraw.handleWithdrawAccout(bot, r, &info, update, true)
+		handler.handleWithdrawAccout(bot, r, &info, update, true)
 		return
 	}
 
@@ -110,7 +110,7 @@ func (withdraw *Withdraw) Handle(bot *methods.BotExt, r *history.History, update
 		amount, _ := strconv.ParseFloat(result[2], 10)
 		info.amount = uint32(amount * 100)
 		info.account = result[3]
-		withdraw.handleWithdrawOverview(bot, r, &info, update, true)
+		handler.handleWithdrawOverview(bot, r, &info, update, true)
 		return
 	}
 
@@ -123,7 +123,7 @@ func (withdraw *Withdraw) Handle(bot *methods.BotExt, r *history.History, update
 			amount, _ := strconv.ParseFloat(result[2], 10)
 			info.amount = uint32(amount * 100)
 			info.account = result[3]
-			withdraw.handleWithdraw(bot, r, &info, update.CallbackQuery)
+			handler.handleWithdraw(bot, r, &info, update.CallbackQuery)
 		} else {
 			// 未开放提现
 			fromID := update.CallbackQuery.From.ID
@@ -140,20 +140,20 @@ func (withdraw *Withdraw) Handle(bot *methods.BotExt, r *history.History, update
 	}
 
 	// 路由到其它处理模块
-	handler := withdraw.route(bot, update.CallbackQuery)
-	if handler == nil {
+	newHandler := handler.route(bot, update.CallbackQuery)
+	if newHandler == nil {
 		return
 	}
-	handler.Handle(bot, r, update)
+	newHandler.Handle(bot, r, update)
 }
 
 // 消息路由
-func (withdraw *Withdraw) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
+func (handler *WithdrawHandler) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
 	return nil
 }
 
 // 处理选择资产
-func (withdraw *Withdraw) handleChooseAsset(bot *methods.BotExt, query *types.CallbackQuery) {
+func (handler *WithdrawHandler) handleChooseAsset(bot *methods.BotExt, query *types.CallbackQuery) {
 	// 生成菜单列表
 	data := query.Data
 	fromID := query.From.ID
@@ -175,7 +175,7 @@ func (withdraw *Withdraw) handleChooseAsset(bot *methods.BotExt, query *types.Ca
 }
 
 // 处理输入提现金额
-func (withdraw *Withdraw) handleEnterWithdrawAmount(bot *methods.BotExt, r *history.History,
+func (handler *WithdrawHandler) handleEnterWithdrawAmount(bot *methods.BotExt, r *history.History,
 	info *withdrawInfo, update *types.Update, amount string) {
 
 	// 处理错误
@@ -220,9 +220,9 @@ func (withdraw *Withdraw) handleEnterWithdrawAmount(bot *methods.BotExt, r *hist
 
 	// 检查用户余额
 	lAmount := uint32(fAmount * 100)
-	handler := storage.AssetStorage{}
+	newHandler := storage.AssetStorage{}
 	fee, _ := feessync.GetFee(storage.GetAssetSymbol(info.asset))
-	asset, err := handler.GetAsset(fromID, storage.GetAssetSymbol(info.asset))
+	asset, err := newHandler.GetAsset(fromID, storage.GetAssetSymbol(info.asset))
 	if err != nil || asset.Amount < (lAmount+fee) {
 		reply := tr(fromID, "lng_priv_withdraw_amount_error")
 		handlerError(fmt.Sprintf(reply, info.asset, bitCNY, bitUSD,
@@ -234,17 +234,17 @@ func (withdraw *Withdraw) handleEnterWithdrawAmount(bot *methods.BotExt, r *hist
 	r.Clear()
 	info.amount = lAmount
 	update.CallbackQuery.Data = data + amount + "/"
-	withdraw.handleWithdrawAccout(bot, r, info, update, false)
+	handler.handleWithdrawAccout(bot, r, info, update, false)
 }
 
 // 处理提现金额
-func (withdraw *Withdraw) handleWithdrawAmount(bot *methods.BotExt, r *history.History, info *withdrawInfo,
+func (handler *WithdrawHandler) handleWithdrawAmount(bot *methods.BotExt, r *history.History, info *withdrawInfo,
 	update *types.Update) {
 
 	// 处理输入个数
 	back, err := r.Back()
 	if err == nil && back.Message != nil {
-		withdraw.handleEnterWithdrawAmount(bot, r, info, update, back.Message.Text)
+		handler.handleEnterWithdrawAmount(bot, r, info, update, back.Message.Text)
 		return
 	}
 
@@ -274,7 +274,7 @@ func (withdraw *Withdraw) handleWithdrawAmount(bot *methods.BotExt, r *history.H
 }
 
 // 处理输入账户名
-func (withdraw *Withdraw) handleEnterWithdrawAccout(bot *methods.BotExt, r *history.History,
+func (handler *WithdrawHandler) handleEnterWithdrawAccout(bot *methods.BotExt, r *history.History,
 	info *withdrawInfo, update *types.Update, account string) {
 
 	// 处理错误
@@ -304,17 +304,17 @@ func (withdraw *Withdraw) handleEnterWithdrawAccout(bot *methods.BotExt, r *hist
 	r.Clear()
 	info.account = account
 	update.CallbackQuery.Data = data + account + "/"
-	withdraw.handleWithdrawOverview(bot, r, info, update, false)
+	handler.handleWithdrawOverview(bot, r, info, update, false)
 }
 
 // 处理提现账户名
-func (withdraw *Withdraw) handleWithdrawAccout(bot *methods.BotExt, r *history.History, info *withdrawInfo,
+func (handler *WithdrawHandler) handleWithdrawAccout(bot *methods.BotExt, r *history.History, info *withdrawInfo,
 	update *types.Update, edit bool) {
 
 	// 处理输入金额
 	back, err := r.Back()
 	if err == nil && back.Message != nil {
-		withdraw.handleEnterWithdrawAccout(bot, r, info, update, back.Message.Text)
+		handler.handleEnterWithdrawAccout(bot, r, info, update, back.Message.Text)
 		return
 	}
 
@@ -346,7 +346,7 @@ func (withdraw *Withdraw) handleWithdrawAccout(bot *methods.BotExt, r *history.H
 }
 
 // 处理提现概览
-func (withdraw *Withdraw) handleWithdrawOverview(bot *methods.BotExt, r *history.History, info *withdrawInfo,
+func (handler *WithdrawHandler) handleWithdrawOverview(bot *methods.BotExt, r *history.History, info *withdrawInfo,
 	update *types.Update, edit bool) {
 
 	fromID := update.CallbackQuery.From.ID
@@ -379,7 +379,7 @@ func (withdraw *Withdraw) handleWithdrawOverview(bot *methods.BotExt, r *history
 }
 
 // 处理提现
-func (withdraw *Withdraw) handleWithdraw(bot *methods.BotExt, r *history.History, info *withdrawInfo,
+func (handler *WithdrawHandler) handleWithdraw(bot *methods.BotExt, r *history.History, info *withdrawInfo,
 	query *types.CallbackQuery) {
 
 	// 生成菜单
@@ -397,8 +397,8 @@ func (withdraw *Withdraw) handleWithdraw(bot *methods.BotExt, r *history.History
 	fee, _ := feessync.GetFee(asset)
 
 	// 扣除余额
-	handler := storage.AssetStorage{}
-	err := handler.Withdraw(fromID, asset, info.amount+fee)
+	newHandler := storage.AssetStorage{}
+	err := newHandler.Withdraw(fromID, asset, info.amount+fee)
 	if err != nil {
 		logger.Warnf("Failed to withdraw asset, UserID: %d, Asset: %s, Amount: %d, Fee: %d, %v",
 			fromID, info.asset, info.amount, fee, err)
@@ -407,7 +407,7 @@ func (withdraw *Withdraw) handleWithdraw(bot *methods.BotExt, r *history.History
 		bot.EditMessageReplyMarkup(query.Message, reply, false, markup)
 		return
 	}
-	logger.Errorf("Withdraw asset success, UserID: %d, Asset: %s, Amount: %d, Fee: %d",
+	logger.Errorf("WithdrawHandler asset success, UserID: %d, Asset: %s, Amount: %d, Fee: %d",
 		fromID, info.asset, info.amount, fee)
 
 	// 提交成功
@@ -429,7 +429,7 @@ func (withdraw *Withdraw) handleWithdraw(bot *methods.BotExt, r *history.History
 	models.InsertHistory(fromID, desc)
 
 	// 获取转账结果
-	err = withdraw.HandleWithdrawFuture(future)
+	err = handler.HandleWithdrawFuture(future)
 	if err != nil {
 		// 返回处理结果
 		reply := tr(fromID, "lng_priv_withdraw_wallet_error")
@@ -445,7 +445,7 @@ func (withdraw *Withdraw) handleWithdraw(bot *methods.BotExt, r *history.History
 }
 
 // 处理提现结果
-func (withdraw *Withdraw) HandleWithdrawFuture(future *withdrawservice.Future) error {
+func (handler *WithdrawHandler) HandleWithdrawFuture(future *withdrawservice.Future) error {
 	err := future.GetResult()
 	if err == nil {
 		return nil
@@ -459,9 +459,9 @@ func (withdraw *Withdraw) HandleWithdrawFuture(future *withdrawservice.Future) e
 	}
 
 	// 退还资金
-	handler := storage.AssetStorage{}
+	newHandler := storage.AssetStorage{}
 	amount := future.Transfer.Amount + future.Transfer.Fee
-	if err = handler.Deposit(future.Transfer.UserID, asset, amount); err != nil {
+	if err = newHandler.Deposit(future.Transfer.UserID, asset, amount); err != nil {
 		logger.Errorf("Failed to return withdraw asset, OrderID: %d, %v", future.OrderID, err)
 
 		// 记录操作历史

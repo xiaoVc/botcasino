@@ -108,14 +108,13 @@ func main() {
 	pusher.CreatePusherForOnce(pool)
 
 	// 启动RPC服务
-	port := strconv.Itoa(int(serveCfg.Port))
-	address := serveCfg.BindAddress + ":" + port
+	address := serveCfg.GRPCBindAddress + ":" + strconv.Itoa(serveCfg.GRPCPort)
 	go service.RunService(address)
 
 	// 启动更新服务器
-	logger.Infof("Casino server started, grpc listen: %s:%d", serveCfg.BindAddress, serveCfg.Port)
+	logger.Infof("Casino server started, grpc listen: %s", address)
 	go func() {
-		err = botUpdater.ListenAndServe(":443")
+		err = botUpdater.ListenAndServe(":" + strconv.Itoa(serveCfg.Port))
 		if err != nil {
 			logger.Panicf("Casino server failed to listen: %v", err)
 		}

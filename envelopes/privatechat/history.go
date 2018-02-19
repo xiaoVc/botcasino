@@ -25,31 +25,31 @@ func init() {
 	}
 }
 
-// History 历史记录
-type History struct {
+// HistoryHandler 历史记录
+type HistoryHandler struct {
 }
 
 // Handle 消息处理
-func (history *History) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
+func (handler *HistoryHandler) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
 	data := update.CallbackQuery.Data
 	result := reMathHistoryPage.FindStringSubmatch(data)
 	if len(result) == 3 {
 		page, err := strconv.Atoi(result[2])
 		if err != nil {
-			history.replyHistory(bot, 0, update.CallbackQuery)
+			handler.replyHistory(bot, 0, update.CallbackQuery)
 		} else {
-			history.replyHistory(bot, page, update.CallbackQuery)
+			handler.replyHistory(bot, page, update.CallbackQuery)
 		}
 	}
 }
 
 // 消息路由
-func (history *History) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
+func (handler *HistoryHandler) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
 	return nil
 }
 
 // 生成菜单列表
-func (history *History) makeMenuList(fromID int64, page int) *methods.InlineKeyboardMarkup {
+func (handler *HistoryHandler) makeMenuList(fromID int64, page int) *methods.InlineKeyboardMarkup {
 	priv := fmt.Sprintf("/history/%d/", page-1)
 	next := fmt.Sprintf("/history/%d/", page+1)
 	menus := [...]methods.InlineKeyboardButton{
@@ -61,7 +61,7 @@ func (history *History) makeMenuList(fromID int64, page int) *methods.InlineKeyb
 }
 
 // 生成回复内容
-func (history *History) makeReplyContent(fromID int64, array []models.History, page, pagesum uint) string {
+func (handler *HistoryHandler) makeReplyContent(fromID int64, array []models.History, page, pagesum uint) string {
 	header := fmt.Sprintf("%s (*%d*/%d)\n\n", tr(fromID, "lng_priv_history"), page, pagesum)
 	if len(array) > 0 {
 		lines := make([]string, 0, len(array))
@@ -76,7 +76,7 @@ func (history *History) makeReplyContent(fromID int64, array []models.History, p
 }
 
 // 回复历史记录
-func (history *History) replyHistory(bot *methods.BotExt, page int, query *types.CallbackQuery) {
+func (handler *HistoryHandler) replyHistory(bot *methods.BotExt, page int, query *types.CallbackQuery) {
 	// 检查页数
 	if page < 1 {
 		page = 1
@@ -99,6 +99,6 @@ func (history *History) replyHistory(bot *methods.BotExt, page int, query *types
 		reply := tr(fromID, "lng_priv_history_no_op")
 		bot.AnswerCallbackQuery(query, reply, false, "", 0)
 	}
-	reply := history.makeReplyContent(fromID, array, uint(page), pagesum)
-	bot.EditMessageReplyMarkup(query.Message, reply, true, history.makeMenuList(fromID, page))
+	reply := handler.makeReplyContent(fromID, array, uint(page), pagesum)
+	bot.EditMessageReplyMarkup(query.Message, reply, true, handler.makeMenuList(fromID, page))
 }

@@ -39,8 +39,7 @@ func RestoreOrder(w http.ResponseWriter, r *http.Request) {
 		request.OrderID, err)
 
 	// 写入操作记录
-	handler := privatechat.Withdraw{}
-	handler.HandleWithdrawFuture(future)
+	new(privatechat.WithdrawHandler).HandleWithdrawFuture(future)
 
 	// 返回处理结果
 	reply := RestoreOrderReply{OK: true}

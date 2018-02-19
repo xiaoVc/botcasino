@@ -37,50 +37,50 @@ func UpdateRedEnvelope(bot *methods.BotExt, redEnvelope *storage.RedEnvelope, re
 	reply = fmt.Sprintf(reply, typ, received, redEnvelope.Number, amount,
 		storage.GetAsset(redEnvelope.Asset), redEnvelope.SenderName,
 		redEnvelope.Memo, getAd(bot.ID), bot.UserName, redEnvelope.ID, bot.UserName, redEnvelope.ID)
-	handler := storage.RedEnvelopeStorage{}
-	if handler.IsExpired(redEnvelope.ID) {
+	newHandler := storage.RedEnvelopeStorage{}
+	if newHandler.IsExpired(redEnvelope.ID) {
 		menus := [...]methods.InlineKeyboardButton{
 			methods.InlineKeyboardButton{Text: tr(0, "lng_chat_expired"), CallbackData: "expired"},
 		}
-		bot.EditReplyMarkup(redEnvelope.GroupID, redEnvelope.MessageID, reply, true,
+		bot.EditReplyMarkupDisableWebPagePreview(redEnvelope.GroupID, redEnvelope.MessageID, reply, true,
 			methods.MakeInlineKeyboardMarkup(menus[:], 1))
 	} else if received == redEnvelope.Number {
 		menus := [...]methods.InlineKeyboardButton{
 			methods.InlineKeyboardButton{Text: tr(0, "lng_chat_finished"), CallbackData: "removed"},
 		}
-		bot.EditReplyMarkup(redEnvelope.GroupID, redEnvelope.MessageID, reply, true,
+		bot.EditReplyMarkupDisableWebPagePreview(redEnvelope.GroupID, redEnvelope.MessageID, reply, true,
 			methods.MakeInlineKeyboardMarkup(menus[:], 1))
 	} else {
 		data := strconv.FormatUint(redEnvelope.ID, 10)
 		menus := [...]methods.InlineKeyboardButton{
 			methods.InlineKeyboardButton{Text: tr(0, "lng_chat_receive"), CallbackData: data},
 		}
-		bot.EditReplyMarkup(redEnvelope.GroupID, redEnvelope.MessageID, reply, true,
+		bot.EditReplyMarkupDisableWebPagePreview(redEnvelope.GroupID, redEnvelope.MessageID, reply, true,
 			methods.MakeInlineKeyboardMarkup(menus[:], 1))
 	}
 }
 
-// MainMenu 主菜单
-type MainMenu struct {
+// MainMenuHandler 主菜单
+type MainMenuHandler struct {
 }
 
 // Handle 消息处理
-func (menu *MainMenu) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
+func (handler *MainMenuHandler) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
 	// 处理发送红包
 	if update.Message != nil {
-		menu.handleSendRedEnvelopes(bot, update.Message)
+		handler.handleSendRedEnvelopes(bot, update.Message)
 		return
 	}
 
 	// 处理领取红包
 	if update.CallbackQuery != nil {
-		menu.handleReceiveEnvelopes(bot, update.CallbackQuery)
+		handler.handleReceiveEnvelopes(bot, update.CallbackQuery)
 		return
 	}
 }
 
 // 消息路由
-func (menu *MainMenu) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
+func (handler *MainMenuHandler) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
 	return nil
 }
 
@@ -93,7 +93,7 @@ func redEnvelopesTypeToString(isLucky bool) string {
 }
 
 // 处理发送红包
-func (menu *MainMenu) handleSendRedEnvelopes(bot *methods.BotExt, message *types.Message) {
+func (handler *MainMenuHandler) handleSendRedEnvelopes(bot *methods.BotExt, message *types.Message) {
 	// 获取参数
 	fromID := message.From.ID
 	result := strings.Split(message.Text, " ")
@@ -108,8 +108,8 @@ func (menu *MainMenu) handleSendRedEnvelopes(bot *methods.BotExt, message *types
 	}
 
 	// 获取红包信息
-	handler := storage.RedEnvelopeStorage{}
-	redEnvelope, received, err := handler.GetRedEnvelope(id)
+	newHandler := storage.RedEnvelopeStorage{}
+	redEnvelope, received, err := newHandler.GetRedEnvelope(id)
 	if err != nil {
 		logger.Errorf("Failed to get red envelope, %v", err)
 		return
@@ -144,14 +144,14 @@ func (menu *MainMenu) handleSendRedEnvelopes(bot *methods.BotExt, message *types
 		storage.GetAsset(redEnvelope.Asset), redEnvelope.SenderName,
 		redEnvelope.Memo, getAd(bot.ID), bot.UserName, redEnvelope.ID, bot.UserName, redEnvelope.ID)
 	markup := methods.MakeInlineKeyboardMarkup(menus[:], 1)
-	message, err = bot.SendMessage(message.Chat.ID, reply, true, markup)
+	message, err = bot.SendMessageDisableWebPagePreview(message.Chat.ID, reply, true, markup)
 	if err != nil {
 		logger.Errorf("Failed to send red envelope info, %v", err)
 		return
 	}
 
 	// 激活红包
-	err = handler.ActiveRedEnvelope(id, fromID, message.Chat.ID, message.MessageID)
+	err = newHandler.ActiveRedEnvelope(id, fromID, message.Chat.ID, message.MessageID)
 	if err != nil {
 		logger.Errorf("Failed to active red envelope, %v", err)
 		return
@@ -159,7 +159,7 @@ func (menu *MainMenu) handleSendRedEnvelopes(bot *methods.BotExt, message *types
 }
 
 // 处理红包错误
-func (menu *MainMenu) handleReceiveError(bot *methods.BotExt, query *types.CallbackQuery,
+func (handler *MainMenuHandler) handleReceiveError(bot *methods.BotExt, query *types.CallbackQuery,
 	id uint64, err error) {
 
 	// 没有红包
@@ -199,7 +199,7 @@ func (menu *MainMenu) handleReceiveError(bot *methods.BotExt, query *types.Callb
 }
 
 // 处理领取红包
-func (menu *MainMenu) handleReceiveEnvelopes(bot *methods.BotExt, query *types.CallbackQuery) {
+func (handler *MainMenuHandler) handleReceiveEnvelopes(bot *methods.BotExt, query *types.CallbackQuery) {
 	// 是否过期
 	fromID := query.From.ID
 	if query.Data == "expired" {
@@ -221,16 +221,16 @@ func (menu *MainMenu) handleReceiveEnvelopes(bot *methods.BotExt, query *types.C
 	}
 
 	// 执行领取红包
-	handler := storage.RedEnvelopeStorage{}
-	value, _, err := handler.ReceiveRedEnvelope(id, 0, query.From.FirstName)
+	newHandler := storage.RedEnvelopeStorage{}
+	value, _, err := newHandler.ReceiveRedEnvelope(id, fromID, query.From.FirstName)
 	if err != nil {
-		menu.handleReceiveError(bot, query, id, err)
+		handler.handleReceiveError(bot, query, id, err)
 		return
 	}
 	logger.Warnf("Receive red envelope, id: %d, user_id: %d, value: %d", id, fromID, value)
 
 	// 获取红包信息
-	redEnvelope, received, err := handler.GetRedEnvelope(id)
+	redEnvelope, received, err := newHandler.GetRedEnvelope(id)
 	if err != nil {
 		logger.Errorf("Failed to get red envelope, %v", err)
 		bot.AnswerCallbackQuery(query, tr(0, "lng_chat_receive_error"), false, "", 0)
@@ -266,7 +266,7 @@ func (menu *MainMenu) handleReceiveEnvelopes(bot *methods.BotExt, query *types.C
 	// 回复领完消息
 	if received == redEnvelope.Number {
 		reply = tr(0, "lng_chat_receive_gameover")
-		minRedEnvelope, maxRedEnvelope, err := handler.GetTwoTxtremes(id)
+		minRedEnvelope, maxRedEnvelope, err := newHandler.GetTwoTxtremes(id)
 		if err == nil && redEnvelope.Number > 1 && redEnvelope.Lucky {
 			body := tr(0, "lng_chat_receive_two_txtremes")
 			minValue := fmt.Sprintf("%.2f", float64(minRedEnvelope.Value)/100.0)

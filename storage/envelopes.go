@@ -198,7 +198,7 @@ func (handler *RedEnvelopeStorage) SetExpired(id uint64) error {
 }
 
 // IsReceived 是否已领取
-func (handler *RedEnvelopeStorage) IsReceived(id uint64, userID int32) (bool, error) {
+func (handler *RedEnvelopeStorage) IsReceived(id uint64, userID int64) (bool, error) {
 	received := false
 	sid := strconv.FormatUint(id, 10)
 	err := blotDB.View(func(tx *bolt.Tx) error {
@@ -206,7 +206,7 @@ func (handler *RedEnvelopeStorage) IsReceived(id uint64, userID int32) (bool, er
 		if err != nil {
 			return err
 		}
-		received = bucket.Get([]byte(strconv.FormatInt(int64(userID), 10))) != nil
+		received = bucket.Get([]byte(strconv.FormatInt(userID, 10))) != nil
 		return nil
 	})
 	if err != nil {
@@ -358,7 +358,7 @@ func (handler *RedEnvelopeStorage) receiveRedEnvelope(tx *bolt.Tx, sid string, s
 }
 
 // ReceiveRedEnvelope 领取红包
-func (handler *RedEnvelopeStorage) ReceiveRedEnvelope(id uint64, userID int32,
+func (handler *RedEnvelopeStorage) ReceiveRedEnvelope(id uint64, userID int64,
 	firstName string) (int, int, error) {
 
 	received, err := handler.IsReceived(id, userID)
@@ -411,7 +411,7 @@ func (handler *RedEnvelopeStorage) ReceiveRedEnvelope(id uint64, userID int32,
 		if err != nil {
 			return err
 		}
-		key := []byte(strconv.FormatInt(int64(userID), 10))
+		key := []byte(strconv.FormatInt(userID, 10))
 		if usersBucket.Get(key) != nil {
 			return ErrRepeatReceive
 		}
