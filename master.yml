@@ -41,7 +41,7 @@ wallet_service:
 # 数据库配置
 mysql:
   # 数据库名
-  db: "casino_logs"
+  db: "casinologs"
   # 服务地址
   host: "127.0.0.1:3306"
   # 访问用户

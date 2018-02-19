@@ -1,16 +1,16 @@
 package webrpc
 
 import (
-	"net/http"
 	"sync"
 
+	"github.com/gorilla/mux"
 	"github.com/zhangpanyi/botcasino/webrpc/handlers"
 )
 
 var once sync.Once
 
 // InitRoute 初始路由
-func InitRoute(router *http.ServeMux) {
+func InitRoute(router *mux.Router) {
 	once.Do(func() {
 		router.HandleFunc("/webrpc/addad", handlers.AddAd)
 		router.HandleFunc("/webrpc/delad", handlers.DelAd)
