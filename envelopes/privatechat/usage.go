@@ -6,12 +6,12 @@ import (
 	"github.com/zhangpanyi/basebot/telegram/types"
 )
 
-// Usage 使用说明
-type Usage struct {
+// UsageHandler 使用说明
+type UsageHandler struct {
 }
 
 // Handle 消息处理
-func (usage *Usage) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
+func (*UsageHandler) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
 	fromID := update.CallbackQuery.From.ID
 	menus := [...]methods.InlineKeyboardButton{
 		methods.InlineKeyboardButton{
@@ -27,6 +27,6 @@ func (usage *Usage) Handle(bot *methods.BotExt, r *history.History, update *type
 }
 
 // 消息路由
-func (usage *Usage) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
+func (*UsageHandler) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
 	return nil
 }

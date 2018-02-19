@@ -1,8 +1,11 @@
-# 绑定地址
-bind-address: "0.0.0.0"
+# 端口号(80, 88, 443 or 8443)
+port: 8443
 
-# 端口号
-port: 12180
+# gRPC绑定地址
+grpc_bind_address: "0.0.0.0"
+
+# gRPC端口号
+grpc_port: 12180
 
 # 桶数量
 bucket_num: 16
@@ -41,7 +44,7 @@ wallet_service:
 # 数据库配置
 mysql:
   # 数据库名
-  db: "casino_logs"
+  db: "casinologs"
   # 服务地址
   host: "127.0.0.1:3306"
   # 访问用户

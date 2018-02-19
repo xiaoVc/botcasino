@@ -1,16 +1,16 @@
 /*
 Navicat MySQL Data Transfer
 
-Source Server         : mysql
+Source Server         : 测试数据库
 Source Server Version : 50720
-Source Host           : 209.250.228.79:3306
-Source Database       : casino_logs
+Source Host           : 127.0.0.1:3306
+Source Database       : casinologs
 
 Target Server Type    : MYSQL
 Target Server Version : 50720
 File Encoding         : 65001
 
-Date: 2018-01-08 17:42:37
+Date: 2018-02-19 14:07:44
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -69,4 +69,4 @@ CREATE TABLE `withdraw` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `withdraw_idx_id` (`id`) USING BTREE,
   KEY `withdraw_idx_user_id` (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=100000 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;

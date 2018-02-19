@@ -8,12 +8,12 @@ import (
 	"github.com/zhangpanyi/basebot/telegram/types"
 )
 
-// ShareBot 分享机器人
-type ShareBot struct {
+// ShareBotHandler 分享机器人
+type ShareBotHandler struct {
 }
 
 // Handle 消息处理
-func (share *ShareBot) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
+func (*ShareBotHandler) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
 	fromID := update.CallbackQuery.From.ID
 	reply := fmt.Sprintf(tr(fromID, "lng_priv_share_say"), bot.UserName,
 		fromID, bot.UserName, fromID)
@@ -28,6 +28,6 @@ func (share *ShareBot) Handle(bot *methods.BotExt, r *history.History, update *t
 }
 
 // 消息路由
-func (share *ShareBot) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
+func (*ShareBotHandler) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
 	return nil
 }

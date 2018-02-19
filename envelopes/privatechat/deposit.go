@@ -10,12 +10,12 @@ import (
 	"github.com/zhangpanyi/basebot/telegram/types"
 )
 
-// Deposit 存款
-type Deposit struct {
+// DepositHandler 存款
+type DepositHandler struct {
 }
 
 // Handle 消息处理
-func (deposit *Deposit) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
+func (*DepositHandler) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
 	// 是否开放充值
 	dynamicCfg := config.GetDynamic()
 	fromID := update.CallbackQuery.From.ID
@@ -39,6 +39,6 @@ func (deposit *Deposit) Handle(bot *methods.BotExt, r *history.History, update *
 }
 
 // 消息路由
-func (deposit *Deposit) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
+func (*DepositHandler) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
 	return nil
 }

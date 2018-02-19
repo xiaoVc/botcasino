@@ -69,8 +69,8 @@ func redEnvelopesTypeToString(fromID int64, typ string) string {
 	return tr(fromID, "lng_priv_give_equal")
 }
 
-// Give 发放红包
-type Give struct {
+// GiveHandler 发放红包
+type GiveHandler struct {
 }
 
 // 红包信息
@@ -83,12 +83,12 @@ type redEnvelopes struct {
 }
 
 // Handle 消息处理
-func (give *Give) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
+func (handler *GiveHandler) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
 	// 处理选择资产
 	data := update.CallbackQuery.Data
 	if data == "/give/" {
 		r.Clear()
-		give.handleChooseType(bot, update.CallbackQuery)
+		handler.handleChooseType(bot, update.CallbackQuery)
 		return
 	}
 
@@ -98,7 +98,7 @@ func (give *Give) Handle(bot *methods.BotExt, r *history.History, update *types.
 	if len(result) == 2 {
 		r.Clear()
 		info.typ = result[1]
-		give.handleChooseAsset(bot, &info, update.CallbackQuery)
+		handler.handleChooseAsset(bot, &info, update.CallbackQuery)
 		return
 	}
 
@@ -107,7 +107,7 @@ func (give *Give) Handle(bot *methods.BotExt, r *history.History, update *types.
 	if len(result) == 3 {
 		info.typ = result[1]
 		info.asset = result[2]
-		give.handleEnvelopesAmount(bot, r, &info, update)
+		handler.handleEnvelopesAmount(bot, r, &info, update)
 		return
 	}
 
@@ -118,7 +118,7 @@ func (give *Give) Handle(bot *methods.BotExt, r *history.History, update *types.
 		info.asset = result[2]
 		amount, _ := strconv.ParseFloat(result[3], 10)
 		info.amount = uint32(amount * 100)
-		give.handleEnvelopesNumber(bot, r, &info, update, true)
+		handler.handleEnvelopesNumber(bot, r, &info, update, true)
 		return
 	}
 
@@ -131,20 +131,20 @@ func (give *Give) Handle(bot *methods.BotExt, r *history.History, update *types.
 		info.amount = uint32(amount * 100)
 		number, _ := strconv.Atoi(result[4])
 		info.number = uint32(number)
-		give.handleEnvelopesMemo(bot, r, &info, update)
+		handler.handleEnvelopesMemo(bot, r, &info, update)
 		return
 	}
 
 	// 路由到其它处理模块
-	handler := give.route(bot, update.CallbackQuery)
-	if handler == nil {
+	newHandler := handler.route(bot, update.CallbackQuery)
+	if newHandler == nil {
 		return
 	}
-	handler.Handle(bot, r, update)
+	newHandler.Handle(bot, r, update)
 }
 
 // 消息路由
-func (give *Give) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
+func (handler *GiveHandler) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
 	return nil
 }
 
@@ -173,7 +173,7 @@ func makeGiveBaseMenus(fromID int64, data string) *methods.InlineKeyboardMarkup 
 }
 
 // 处理选择类型
-func (give *Give) handleChooseType(bot *methods.BotExt, query *types.CallbackQuery) {
+func (handler *GiveHandler) handleChooseType(bot *methods.BotExt, query *types.CallbackQuery) {
 
 	// 生成菜单列表
 	data := query.Data
@@ -201,7 +201,7 @@ func (give *Give) handleChooseType(bot *methods.BotExt, query *types.CallbackQue
 }
 
 // 处理选择资产
-func (give *Give) handleChooseAsset(bot *methods.BotExt, info *redEnvelopes, query *types.CallbackQuery) {
+func (handler *GiveHandler) handleChooseAsset(bot *methods.BotExt, info *redEnvelopes, query *types.CallbackQuery) {
 	// 生成菜单列表
 	data := query.Data
 	fromID := query.From.ID
@@ -225,7 +225,7 @@ func (give *Give) handleChooseAsset(bot *methods.BotExt, info *redEnvelopes, que
 }
 
 // 处理输入红包金额
-func (give *Give) handleEnterEnvelopesAmount(bot *methods.BotExt, r *history.History,
+func (handler *GiveHandler) handleEnterEnvelopesAmount(bot *methods.BotExt, r *history.History,
 	info *redEnvelopes, update *types.Update, enterAmount string) {
 
 	// 生成菜单列表
@@ -268,17 +268,17 @@ func (give *Give) handleEnterEnvelopesAmount(bot *methods.BotExt, r *history.His
 	r.Clear()
 	info.amount = uint32(amount * 100)
 	update.CallbackQuery.Data = data + enterAmount + "/"
-	give.handleEnvelopesNumber(bot, r, info, update, false)
+	handler.handleEnvelopesNumber(bot, r, info, update, false)
 }
 
 // 处理红包金额
-func (give *Give) handleEnvelopesAmount(bot *methods.BotExt, r *history.History, info *redEnvelopes,
+func (handler *GiveHandler) handleEnvelopesAmount(bot *methods.BotExt, r *history.History, info *redEnvelopes,
 	update *types.Update) {
 
 	// 处理输入金额
 	back, err := r.Back()
 	if err == nil && back.Message != nil {
-		give.handleEnterEnvelopesAmount(bot, r, info, update, back.Message.Text)
+		handler.handleEnterEnvelopesAmount(bot, r, info, update, back.Message.Text)
 		return
 	}
 
@@ -305,7 +305,7 @@ func (give *Give) handleEnvelopesAmount(bot *methods.BotExt, r *history.History,
 }
 
 // 处理输入红包个数
-func (give *Give) handleEnterEnvelopesNumber(bot *methods.BotExt, r *history.History,
+func (handler *GiveHandler) handleEnterEnvelopesNumber(bot *methods.BotExt, r *history.History,
 	info *redEnvelopes, update *types.Update, enterNumber string) {
 
 	// 生成菜单列表
@@ -346,17 +346,17 @@ func (give *Give) handleEnterEnvelopesNumber(bot *methods.BotExt, r *history.His
 	r.Clear()
 	info.number = uint32(number)
 	update.CallbackQuery.Data += enterNumber + "/"
-	give.handleEnvelopesMemo(bot, r, info, update)
+	handler.handleEnvelopesMemo(bot, r, info, update)
 }
 
 // 处理红包个数
-func (give *Give) handleEnvelopesNumber(bot *methods.BotExt, r *history.History, info *redEnvelopes,
+func (handler *GiveHandler) handleEnvelopesNumber(bot *methods.BotExt, r *history.History, info *redEnvelopes,
 	update *types.Update, edit bool) {
 
 	// 处理输入个数
 	back, err := r.Back()
 	if err == nil && back.Message != nil {
-		give.handleEnterEnvelopesNumber(bot, r, info, update, back.Message.Text)
+		handler.handleEnterEnvelopesNumber(bot, r, info, update, back.Message.Text)
 		return
 	}
 
@@ -393,7 +393,7 @@ func (give *Give) handleEnvelopesNumber(bot *methods.BotExt, r *history.History,
 }
 
 // 处理输入红包留言
-func (give *Give) handleEnterEnvelopesMemo(bot *methods.BotExt, r *history.History,
+func (handler *GiveHandler) handleEnterEnvelopesMemo(bot *methods.BotExt, r *history.History,
 	info *redEnvelopes, update *types.Update, memo string) {
 
 	// 生成菜单列表
@@ -420,7 +420,7 @@ func (give *Give) handleEnterEnvelopesMemo(bot *methods.BotExt, r *history.Histo
 
 	// 处理生成红包
 	info.memo = memo
-	redEnvelope, err := give.handleGenerateRedEnvelopes(fromID, query.From.FirstName, info)
+	redEnvelope, err := handler.handleGenerateRedEnvelopes(fromID, query.From.FirstName, info)
 	if err != nil {
 		logger.Warnf("Failed to create red envelopes, %v", err)
 		handlerError(tr(fromID, "lng_priv_give_create_failed"))
@@ -441,13 +441,13 @@ func (give *Give) handleEnterEnvelopesMemo(bot *methods.BotExt, r *history.Histo
 }
 
 // 处理红包留言
-func (give *Give) handleEnvelopesMemo(bot *methods.BotExt, r *history.History, info *redEnvelopes,
+func (handler *GiveHandler) handleEnvelopesMemo(bot *methods.BotExt, r *history.History, info *redEnvelopes,
 	update *types.Update) {
 
 	// 处理输入留言
 	back, err := r.Back()
 	if err == nil && back.Message != nil {
-		give.handleEnterEnvelopesMemo(bot, r, info, update, back.Message.Text)
+		handler.handleEnterEnvelopesMemo(bot, r, info, update, back.Message.Text)
 		return
 	}
 
@@ -475,7 +475,7 @@ func (give *Give) handleEnvelopesMemo(bot *methods.BotExt, r *history.History, i
 }
 
 // 处理生成红包
-func (give *Give) handleGenerateRedEnvelopes(userID int64, firstName string,
+func (handler *GiveHandler) handleGenerateRedEnvelopes(userID int64, firstName string,
 	info *redEnvelopes) (*storage.RedEnvelope, error) {
 
 	// 冻结资金

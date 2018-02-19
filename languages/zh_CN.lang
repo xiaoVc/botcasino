@@ -60,7 +60,7 @@
     "lng_priv_history_fmt": "- `%s`, %s",
     "lng_priv_usage": "❓ 帮助说明\n\n[1. 什么是BitCNY/BitUSD?]\nBitCNY/BitUSD是比特股系统里的智能货币，1BitUSD = 1美元，1BitCNY = 1人民币。持有者有权在任意时候从市场上获得同等价值的比特股(BTS)。它们具备像比特币一样全球范围快速传输的功能，并且价值稳定，有效解决了比特币价格波动过大的问题。\n\n[2. 哪里获得BitCNY/BitUSD?]\n你可以从承兑商那里使用法币购买BitCNY/BitUSD，以及将BitCNY/BitUSD提现为等值的法币。也可以在交易所使用其它虚拟币兑换BitCNY/BitUSD。\n\n以下是目前市面上主要有以下几个渠道：\naex：[https://www.aex.com/](https://www.aex.com/)\nbig.one：[https://big.one/](https://big.one/)\nzb.com：[https://www.zb.com/](https://www.zb.com/)\n\n鼓鼓钱包：[https://www.magicw.net/](https://www.magicw.net/)\n大象承兑：[http://bitassets.cc/](http://bitassets.cc/)\n承兑宝：[http://www.54163.com/](http://www.54163.com/)\n\n[3. 如果充值/提现失败怎么办?]\n请联系邮箱 bts-casino@live.com 解决，并提供相关的区块信息或订单ID。",
 
-    "lng_chat_welcome": "🎁 %s(*%d*/%d, *%s* *%s*)\n\n@%s：%s%s\n\n⬇️点击此链接发放红包：\n[http://telegram.me/%s?start=%d](http://telegram.me/%s?start=%d)",
+    "lng_chat_welcome": "🎁 %s(*%d*/%d, *%s* *%s*)\n\n%s：%s%s\n\n⬇️点击此链接发放红包：\n[http://telegram.me/%s?start=%d](http://telegram.me/%s?start=%d)",
     "lng_chat_receive": "领取红包",
     "lng_chat_expired": "已经过期",
     "lng_chat_finished": "已被抢完",

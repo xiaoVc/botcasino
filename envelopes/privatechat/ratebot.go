@@ -8,12 +8,12 @@ import (
 	"github.com/zhangpanyi/basebot/telegram/types"
 )
 
-// RateBot 机器人评分
-type RateBot struct {
+// RateBotHandler 机器人评分
+type RateBotHandler struct {
 }
 
 // Handle 消息处理
-func (rate *RateBot) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
+func (*RateBotHandler) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
 	fromID := update.CallbackQuery.From.ID
 	reply := fmt.Sprintf(tr(fromID, "lng_priv_rate_say"), bot.UserName, bot.UserName)
 	menus := [...]methods.InlineKeyboardButton{
@@ -27,6 +27,6 @@ func (rate *RateBot) Handle(bot *methods.BotExt, r *history.History, update *typ
 }
 
 // 消息路由
-func (rate *RateBot) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
+func (*RateBotHandler) route(bot *methods.BotExt, query *types.CallbackQuery) Handler {
 	return nil
 }

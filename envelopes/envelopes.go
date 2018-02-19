@@ -48,11 +48,9 @@ func NewUpdate(bot *methods.BotExt, update *types.Update) {
 
 	// 处理机器人请求
 	if chatType == types.ChatPrivate {
-		handler := privatechat.MainMenu{}
-		handler.Handle(bot, r, update)
+		new(privatechat.MainMenuHandler).Handle(bot, r, update)
 	} else {
-		handler := groupchat.MainMenu{}
-		handler.Handle(bot, r, update)
+		new(groupchat.MainMenuHandler).Handle(bot, r, update)
 	}
 
 	// 删除空操作记录

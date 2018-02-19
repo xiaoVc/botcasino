@@ -65,7 +65,7 @@ type RedEnvelope struct {
 
 // RedEnvelopeUser 红包用户
 type RedEnvelopeUser struct {
-	UserID    int32  `json:"user_id"`    // 用户ID
+	UserID    int64  `json:"user_id"`    // 用户ID
 	FirstName string `json:"first_name"` // 用户名
 }
 
