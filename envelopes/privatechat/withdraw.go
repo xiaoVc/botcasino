@@ -401,14 +401,14 @@ func (handler *WithdrawHandler) handleWithdraw(bot *methods.BotExt, r *history.H
 	err := newHandler.Withdraw(fromID, asset, info.amount+fee)
 	if err != nil {
 		logger.Warnf("Failed to withdraw asset, UserID: %d, Asset: %s, Amount: %d, Fee: %d, %v",
-			fromID, info.asset, info.amount, fee, err)
+			fromID, asset, info.amount, fee, err)
 		reply := tr(fromID, "lng_priv_withdraw_no_money")
 		bot.AnswerCallbackQuery(query, reply, false, "", 0)
 		bot.EditMessageReplyMarkup(query.Message, reply, false, markup)
 		return
 	}
-	logger.Errorf("WithdrawHandler asset success, UserID: %d, Asset: %s, Amount: %d, Fee: %d",
-		fromID, info.asset, info.amount, fee)
+	logger.Errorf("Withdraw asset success, UserID: %d, Asset: %s, Amount: %d, Fee: %d",
+		fromID, asset, info.amount, fee)
 
 	// 提交成功
 	reply := tr(fromID, "lng_priv_withdraw_submit_ok")
@@ -424,7 +424,7 @@ func (handler *WithdrawHandler) handleWithdraw(bot *methods.BotExt, r *history.H
 	future, err := withdrawservice.AddFuture(fromID, info.account, assetID, info.amount, fee)
 
 	// 记录操作历史
-	desc := fmt.Sprintf("您申请提现*%.2f* *%s*到比特股账户*%s*正在处理(订单ID: *%d*), 花费手续费*%.2f* *%s*",
+	desc := fmt.Sprintf("您申请提现*%.2f* *%s*到比特股账户 *%s* 正在处理(订单ID: *%d*), 花费手续费*%.2f* *%s*",
 		float64(info.amount)/100.0, asset, tg.Pre(info.account), future.OrderID, float64(fee)/100.0, asset)
 	models.InsertHistory(fromID, desc)
 
@@ -450,29 +450,28 @@ func (handler *WithdrawHandler) HandleWithdrawFuture(future *withdrawservice.Fut
 	if err == nil {
 		return nil
 	}
-
 	logger.Errorf("Failed to withdraw asset, transfer error, OrderID: %d, %v", future.OrderID, err)
 
-	asset := storage.BitCNY
+	asset := storage.BitCNYSymbol
 	if future.Transfer.AssetID != remote.CNYAssetID {
-		asset = storage.BitUSD
+		asset = storage.BitUSDSymbol
 	}
 
 	// 退还资金
 	newHandler := storage.AssetStorage{}
 	amount := future.Transfer.Amount + future.Transfer.Fee
-	if err = newHandler.Deposit(future.Transfer.UserID, asset, amount); err != nil {
-		logger.Errorf("Failed to return withdraw asset, OrderID: %d, %v", future.OrderID, err)
+	if err2 := newHandler.Deposit(future.Transfer.UserID, asset, amount); err2 != nil {
+		logger.Errorf("Failed to return withdraw asset, OrderID: %d, %v", future.OrderID, err2)
 
 		// 记录操作历史
-		desc := fmt.Sprintf("您申请提现*%.2f* *%s*到比特股账户*%s*处理失败(订单ID: *%d*), 退还资金失败",
+		desc := fmt.Sprintf("您申请提现*%.2f* *%s*到比特股账户 *%s* 处理失败(订单ID: *%d*), 退还资金失败",
 			float64(future.Transfer.Amount)/100.0, asset, tg.Pre(future.Transfer.To), future.OrderID)
 		models.InsertHistory(future.Transfer.UserID, desc)
-		return err
+		return err2
 	}
 
 	// 记录操作历史
-	desc := fmt.Sprintf("您申请提现*%.2f* *%s*到比特股账户*%s*处理失败(订单ID: *%d*), 已退还资金",
+	desc := fmt.Sprintf("您申请提现*%.2f* *%s*到比特股账户 *%s* 处理失败(订单ID: *%d*), 已退还资金",
 		float64(future.Transfer.Amount)/100.0, asset, tg.Pre(future.Transfer.To), future.OrderID)
 	models.InsertHistory(future.Transfer.UserID, desc)
 	return err

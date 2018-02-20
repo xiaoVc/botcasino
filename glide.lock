@@ -1,5 +1,5 @@
 hash: e82e75829cc60f1ac45849d1b1a487825fb26edf7fe1fa690be05a01457db626
-updated: 2018-02-20T13:14:04.6277763+08:00
+updated: 2018-02-20T18:05:55.9462657+08:00
 imports:
 - name: github.com/boltdb/bolt
   version: 2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8
@@ -37,7 +37,7 @@ imports:
 - name: github.com/vrecan/death
   version: 0f3cc33443d467c066ea280f5267c7f6ee74040b
 - name: github.com/zhangpanyi/basebot
-  version: a27f6d1be2bfaba9ede7c10ca5686377e265850e
+  version: 87d9aa0f312a2c6980290e328f60effe4858f9a8
   subpackages:
   - hashdb
   - history
