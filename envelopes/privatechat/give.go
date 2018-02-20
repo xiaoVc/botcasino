@@ -436,7 +436,7 @@ func (handler *GiveHandler) handleEnterEnvelopesMemo(bot *methods.BotExt, r *his
 	r.Clear()
 	reply := tr(fromID, "lng_priv_give_created")
 	reply = fmt.Sprintf(reply, bot.UserName, redEnvelope.ID, bot.UserName, redEnvelope.ID)
-	bot.SendMessage(fromID, reply, true, &markup)
+	bot.SendMessageDisableWebPagePreview(fromID, reply, true, &markup)
 	bot.AnswerCallbackQuery(query, "", false, "", 0)
 }
 
