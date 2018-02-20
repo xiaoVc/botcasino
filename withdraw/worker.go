@@ -130,8 +130,8 @@ func (w *work) loop() {
 			if err = models.UpdateWithdraw(future.OrderID, models.WithdrawStatusFailure, &reason); err != nil {
 				logger.Errorf("Failed to update order status as 'WithdrawStatusFailure', order_id=%d, %v",
 					future.OrderID, err)
-				continue
 			}
+			continue
 		}
 
 		// 更新订单状态
