@@ -72,7 +72,7 @@ func main() {
 	}
 
 	// 创建更新器
-	botUpdater, err := updater.NewUpdater(serveCfg.Domain, serveCfg.APIWebsite)
+	botUpdater, err := updater.NewUpdater(serveCfg.Port, serveCfg.Domain, serveCfg.APIWebsite)
 	if err != nil {
 		logger.Panic(err)
 	}
@@ -114,7 +114,7 @@ func main() {
 	// 启动更新服务器
 	logger.Infof("Casino server started, grpc listen: %s", address)
 	go func() {
-		err = botUpdater.ListenAndServe(":" + strconv.Itoa(serveCfg.Port))
+		err = botUpdater.ListenAndServe()
 		if err != nil {
 			logger.Panicf("Casino server failed to listen: %v", err)
 		}
