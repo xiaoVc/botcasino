@@ -10,6 +10,7 @@ import (
 	"github.com/zhangpanyi/botcasino/models"
 	"github.com/zhangpanyi/botcasino/protobuf/casinoserver"
 	"github.com/zhangpanyi/botcasino/storage"
+	"github.com/zhangpanyi/botcasino/envelopes/notify"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -114,6 +115,9 @@ func (*casinoServer) ReceiveNotice(ctx context.Context, req *casinoserver.Receiv
 		desc := fmt.Sprintf("您充值*%.2f* *%s*已确认, 区块高度: *%d*", float64(req.GetAmount())/100.0,
 			req.GetAsset(), req.GetBlockNum())
 		models.InsertHistory(userID, desc)
+
+		// 推送充值通知
+		notify.SendNotice(userID, desc)
 	}()
 	return new(casinoserver.ReceiveNoticeReply), nil
 }

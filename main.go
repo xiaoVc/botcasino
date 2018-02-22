@@ -19,7 +19,7 @@ import (
 	"github.com/zhangpanyi/botcasino/storage"
 	"github.com/zhangpanyi/botcasino/webrpc"
 	"github.com/zhangpanyi/botcasino/withdraw"
-
+	"github.com/zhangpanyi/botcasino/envelopes/notify"
 	"github.com/vrecan/death"
 	"github.com/zhangpanyi/basebot/logger"
 	"github.com/zhangpanyi/basebot/telegram/updater"
@@ -103,6 +103,9 @@ func main() {
 	logger.Infof("Red envelope bot_id is: %d", bot.ID)
 	pool := updater.NewPool(2048)
 	expiretimer.StartTimerForOnce(bot, pool)
+
+	// 初始化推送配置
+	notify.InitBotForOnce(bot)
 
 	// 创建消息推送器
 	pusher.CreatePusherForOnce(pool)
