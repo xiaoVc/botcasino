@@ -252,7 +252,7 @@ func (handler *MainMenuHandler) handleReceiveEnvelopes(bot *methods.BotExt, quer
 
 	// 记录操作历史
 	desc := fmt.Sprintf("您领取了%s(*%d*)发放的红包(id: *%d*), 获得*%.2f* *%s*", redEnvelope.SenderName, redEnvelope.SenderID,
-		redEnvelope.ID, float64(redEnvelope.Amount)/100.0, redEnvelope.Asset)
+		redEnvelope.ID, float64(value)/100.0, redEnvelope.Asset)
 	models.InsertHistory(fromID, desc)
 
 	// 回复领取信息
