@@ -81,6 +81,5 @@
     "lng_chat_receive_success_answer": "恭喜您，领取红包成功。",
     "lng_chat_receive_gameover": "🎁 红包已被领完。",
     "lng_chat_receive_two_txtremes": "手气最佳：%s(*%d*) 获得 *%s* *%s*\n手气最烂：%s(*%d*) 获得 *%s* *%s*",
-    "lng_chat_get_chat_id": "群组ID：**%d**\n如果想发放红包到这个群组，请在发放红包时填写此ID。\n\n电报红包：
-    [http://telegram.me/%s](http://telegram.me/%s)"
+    "lng_chat_get_chat_id": "群组ID：**%d**\n如果想发放红包到这个群组，请在发放红包时填写此ID。\n\n电报红包：[http://telegram.me/%s](http://telegram.me/%s)"
 }
