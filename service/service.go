@@ -23,7 +23,7 @@ func init() {
 	var err error
 	reMathUserID, err = regexp.Compile("^ *(\\d+) *$")
 	if err != nil {
-		logger.Panic(err)
+		panic(err)
 	}
 }
 
