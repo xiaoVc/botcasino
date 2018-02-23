@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/zhangpanyi/botcasino/models"
-
+	"github.com/zhangpanyi/botcasino/location"
 	"github.com/zhangpanyi/basebot/history"
 	"github.com/zhangpanyi/basebot/logger"
 	"github.com/zhangpanyi/basebot/telegram/methods"
@@ -67,7 +67,7 @@ func (handler *HistoryHandler) makeReplyContent(fromID int64, array []models.His
 		lines := make([]string, 0, len(array))
 		format := tr(fromID, "lng_priv_history_fmt")
 		for _, his := range array {
-			date := his.InsertedAt.Format("2006-01-02 03:04:05")
+			date := location.FormatAsHongkong(his.InsertedAt)
 			lines = append(lines, fmt.Sprintf(format, date, his.Describe))
 		}
 		return header + strings.Join(lines, "\n\n")

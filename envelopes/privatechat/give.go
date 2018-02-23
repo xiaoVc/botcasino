@@ -522,7 +522,7 @@ func (handler *GiveHandler) handleGenerateRedEnvelopes(userID int64, firstName s
 		Number:     info.number,
 		Memo:       info.memo,
 		Lucky:      info.typ == randRedEnvelopes,
-		Timestamp:  time.Now().Unix(),
+		Timestamp:  time.Now().UTC().Unix(),
 	}
 	if info.typ == equalRedEnvelopes {
 		redEnvelope.Value = info.amount

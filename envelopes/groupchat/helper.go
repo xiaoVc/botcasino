@@ -2,16 +2,11 @@ package groupchat
 
 import (
 	"fmt"
-	"math/rand"
-	"time"
 
 	"github.com/zhangpanyi/botcasino/config"
 	"github.com/zhangpanyi/botcasino/storage"
-
 	tg "github.com/zhangpanyi/basebot/telegram"
 )
-
-var arrayRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // 获取广告
 func getAd(botID int64) string {
@@ -20,7 +15,7 @@ func getAd(botID int64) string {
 	if err != nil || len(ads) == 0 {
 		return ""
 	}
-	ad := ads[arrayRand.Intn(len(ads))]
+	ad := ads[randx.Intn(len(ads))]
 	return fmt.Sprintf("\n\n*[* %s *]*", tg.Pre(ad.Text))
 }
 

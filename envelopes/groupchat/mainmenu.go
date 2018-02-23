@@ -121,7 +121,7 @@ func (handler *MainMenuHandler) handleSendRedEnvelopes(bot *methods.BotExt, mess
 	}
 
 	// 检查红包过期
-	now := time.Now().Unix()
+	now := time.Now().UTC().Unix()
 	dynamicCfg := config.GetDynamic()
 	if now-redEnvelope.Timestamp >= dynamicCfg.RedEnvelopeExpire {
 		return

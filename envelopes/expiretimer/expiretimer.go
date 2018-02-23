@@ -70,7 +70,7 @@ type expireTimer struct {
 
 // 处理过期红包
 func (t *expireTimer) handleRedEnvelopeExpire() {
-	now := time.Now().Unix()
+	now := time.Now().UTC().Unix()
 	dynamicCfg := config.GetDynamic()
 
 	var id uint64
