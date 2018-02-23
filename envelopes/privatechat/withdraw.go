@@ -49,7 +49,7 @@ func init() {
 		panic(err)
 	}
 
-	reMathWithdrawSubmit, err = regexp.Compile("^/withdraw/(\\w+)/([0-9]+\\.?[0-9]*)/(\\w+)/submit/$")
+	reMathWithdrawSubmit, err = regexp.Compile("^/withdraw/(\\w+)/([0-9]+\\.?[0-9]*)/([\\w|-]+)/submit/$")
 	if err != nil {
 		panic(err)
 	}
@@ -139,12 +139,10 @@ func (handler *WithdrawHandler) Handle(bot *methods.BotExt, r *history.History, 
 		return
 	}
 
-	// 路由到其它处理模块
-	newHandler := handler.route(bot, update.CallbackQuery)
-	if newHandler == nil {
-		return
-	}
-	newHandler.Handle(bot, r, update)
+	// 无效帐户名处理
+	fromID := update.CallbackQuery.From.ID
+	reply := tr(fromID, "lng_priv_withdraw_account_error")
+	bot.AnswerCallbackQuery(update.CallbackQuery, reply, true, "", 0)
 }
 
 // 消息路由
