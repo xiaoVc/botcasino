@@ -49,7 +49,7 @@ func init() {
 		panic(err)
 	}
 
-	reMathWithdrawSubmit, err = regexp.Compile("^/withdraw/(\\w+)/([0-9]+\\.?[0-9]*)/(\\w+)/submit/$")
+	reMathWithdrawSubmit, err = regexp.Compile("^/withdraw/(\\w+)/([0-9]+\\.?[0-9]*)/([\\w|-]+)/submit/$")
 	if err != nil {
 		panic(err)
 	}
