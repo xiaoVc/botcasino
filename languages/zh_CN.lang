@@ -39,6 +39,7 @@
     "lng_priv_give_benediction": "恭喜发财，大吉大利",
     "lng_priv_give_create_failed": "很抱歉😅，创建红包过程出现问题，请稍后重试。",
     "lng_priv_give_created": "👍 红包已创建，请将点击下面的链接分享到群组：\n[http://telegram.me/%s?startgroup=%d](http://telegram.me/%s?startgroup=%d)\n\n`注意：红包超过24小时未领取，会被自动退回。`",
+    "lng_priv_give_created_enter_chat_id": "如果您想将红包发放到指定群组，请点击“选择群组”按钮，然后输入群组ID。群组ID可以通过在群内发送消息 `/chaid` 来获取。",
     "lng_priv_withdraw_not_allow": "很抱歉😅，提现功能暂时关闭，具体开放日期请等候通知。",
     "lng_priv_withdraw_say": "📨 提现(*1*/4)\n\n请您选择需要提现的资产类型，您目前的账户余额：\n💴 bitCNY: *%s*\n💵 bitUSD: *%s*",
     "lng_priv_withdraw_enter_amount": "📨 提现(*2*/4)\n\n您正在提现 *%s*，请在下一条消息中回复需要提现 *%s* 的数量。您目前的账户余额：\n💴 bitCNY: *%s*\n💵 bitUSD: *%s*\n\n`注意：网络手续费收取%s%s`",
@@ -58,7 +59,13 @@
     "lng_priv_withdraw_submit": "确认无误",
     "lng_priv_history_no_op": "您当前还没有任何操作记录。",
     "lng_priv_history_fmt": "- `%s`, %s",
-    "lng_priv_usage": "❓ 帮助说明\n\n欢迎使用电报红包机器人，如果在使用过程中遇到任何问题，请参考此文章解决。\nhttps://steemit.com/telegram/@zhangpanyi/telegeram-bitshares-bitcny-bitusd",
+    "lng_priv_usage": "❓ 帮助说明\n\n欢迎使用电报红包机器人，如果在使用过程中遇到任何问题，请参考此文章解决。\n[https://steemit.com/telegram/@zhangpanyi/telegeram-bitshares-bitcny-bitusd](https://steemit.com/telegram/@zhangpanyi/telegeram-bitshares-bitcny-bitusd)",
+    "lng_chat_enter_chat_id": "选择群组",
+    "lng_chat_already_sent_out": "已经发出",
+    "lng_chat_enter_chat_id_say": "请您在下一条消息中回复发放红包的群组ID。注意：红包机器人必须在群组。",
+    "lng_chat_enter_chat_id_failed": "很抱歉😅，你提供的群组ID有误，群组ID只能是数字。",
+    "lng_chat_enter_chat_id_send_failed": "很抱歉😅，发放红包失败，请检查群组ID是否正确，且红包机器人必须在群组。",
+    "lng_chat_enter_chat_id_send_success": "完成，红包已发放到群组(%d)，赶快去看看吧。",
 
     "lng_chat_welcome": "🎁 %s(*%d*/%d, *%s* *%s*)\n\n%s：%s%s\n\n⬇️点击此链接发放红包：\n[http://telegram.me/%s?start=%d](http://telegram.me/%s?start=%d)",
     "lng_chat_receive": "领取红包",
@@ -73,5 +80,7 @@
     "lng_chat_receive_success": "🎁 用户 %s(*%d*) 领取了红包，获得 *%s* *%s*。",
     "lng_chat_receive_success_answer": "恭喜您，领取红包成功。",
     "lng_chat_receive_gameover": "🎁 红包已被领完。",
-    "lng_chat_receive_two_txtremes": "手气最佳：%s(*%d*) 获得 *%s* *%s*\n手气最烂：%s(*%d*) 获得 *%s* *%s*"
+    "lng_chat_receive_two_txtremes": "手气最佳：%s(*%d*) 获得 *%s* *%s*\n手气最烂：%s(*%d*) 获得 *%s* *%s*",
+    "lng_chat_get_chat_id": "群组ID：**%d**\n如果想发放红包到这个群组，请在发放红包时填写此ID。\n\n电报红包：
+    [http://telegram.me/%s](http://telegram.me/%s)"
 }

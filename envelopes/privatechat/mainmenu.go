@@ -87,6 +87,11 @@ func (handler *MainMenuHandler) route(bot *methods.BotExt, query *types.Callback
 		return new(GiveHandler)
 	}
 
+	// 选择群组
+	if strings.HasPrefix(query.Data, "/chatid/") {
+		return new(SelectGroupHandler)
+	}
+
 	// 使用说明
 	if strings.HasPrefix(query.Data, "/usage/") {
 		return new(UsageHandler)
