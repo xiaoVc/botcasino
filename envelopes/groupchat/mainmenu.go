@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/zhangpanyi/botcasino/config"
 	"github.com/zhangpanyi/botcasino/models"
 	"github.com/zhangpanyi/botcasino/storage"
 
@@ -68,6 +66,12 @@ type MainMenuHandler struct {
 func (handler *MainMenuHandler) Handle(bot *methods.BotExt, r *history.History, update *types.Update) {
 	// 处理发送红包
 	if update.Message != nil {
+		if update.Message.Text == "/chatid" ||
+			strings.HasPrefix(update.Message.Text, fmt.Sprintf("/chatid@%s", bot.UserName)) {
+			new(GetChatIDHandler).Handle(bot, r, update)
+			return
+		}
+
 		handler.handleSendRedEnvelopes(bot, update.Message)
 		return
 	}
@@ -102,60 +106,12 @@ func (handler *MainMenuHandler) handleSendRedEnvelopes(bot *methods.BotExt, mess
 		return
 	}
 
+	// 发送红包到群组
 	id, err := strconv.ParseUint(result[1], 10, 64)
 	if err != nil {
 		return
 	}
-
-	// 获取红包信息
-	newHandler := storage.RedEnvelopeStorage{}
-	redEnvelope, received, err := newHandler.GetRedEnvelope(id)
-	if err != nil {
-		logger.Errorf("Failed to get red envelope, %v", err)
-		return
-	}
-
-	// 检查重复激活
-	if redEnvelope.Active {
-		return
-	}
-
-	// 检查红包过期
-	now := time.Now().Unix()
-	dynamicCfg := config.GetDynamic()
-	if now-redEnvelope.Timestamp >= dynamicCfg.RedEnvelopeExpire {
-		return
-	}
-
-	// 生成菜单列表
-	data := strconv.FormatUint(redEnvelope.ID, 10)
-	menus := [...]methods.InlineKeyboardButton{
-		methods.InlineKeyboardButton{Text: tr(0, "lng_chat_receive"), CallbackData: data},
-	}
-
-	// 回复红包信息
-	reply := tr(0, "lng_chat_welcome")
-	typ := redEnvelopesTypeToString(redEnvelope.Lucky)
-	amount := fmt.Sprintf("%.2f", float64(redEnvelope.Amount)/100.0)
-	if !redEnvelope.Lucky {
-		amount = fmt.Sprintf("%.2f", float64(redEnvelope.Amount*redEnvelope.Number)/100.0)
-	}
-	reply = fmt.Sprintf(reply, typ, received, redEnvelope.Number, amount,
-		storage.GetAsset(redEnvelope.Asset), redEnvelope.SenderName,
-		redEnvelope.Memo, getAd(bot.ID), bot.UserName, redEnvelope.ID, bot.UserName, redEnvelope.ID)
-	markup := methods.MakeInlineKeyboardMarkup(menus[:], 1)
-	message, err = bot.SendMessageDisableWebPagePreview(message.Chat.ID, reply, true, markup)
-	if err != nil {
-		logger.Errorf("Failed to send red envelope info, %v", err)
-		return
-	}
-
-	// 激活红包
-	err = newHandler.ActiveRedEnvelope(id, fromID, message.Chat.ID, message.MessageID)
-	if err != nil {
-		logger.Errorf("Failed to active red envelope, %v", err)
-		return
-	}
+	SendRedEnvelopeToGroup(bot, fromID, message.Chat.ID, id)
 }
 
 // 处理红包错误

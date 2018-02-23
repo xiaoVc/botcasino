@@ -436,8 +436,18 @@ func (handler *GiveHandler) handleEnterEnvelopesMemo(bot *methods.BotExt, r *his
 	r.Clear()
 	reply := tr(fromID, "lng_priv_give_created")
 	reply = fmt.Sprintf(reply, bot.UserName, redEnvelope.ID, bot.UserName, redEnvelope.ID)
-	bot.SendMessageDisableWebPagePreview(fromID, reply, true, &markup)
 	bot.AnswerCallbackQuery(query, "", false, "", 0)
+	bot.SendMessageDisableWebPagePreview(fromID, reply, true, &markup)
+
+	// 回复输入群组ID
+	menus := [...]methods.InlineKeyboardButton{
+		methods.InlineKeyboardButton{
+			Text:         tr(fromID, "lng_chat_enter_chat_id"),
+			CallbackData: fmt.Sprintf("/chatid/%d/", redEnvelope.ID),
+		},
+	}
+	reply = tr(fromID, "lng_priv_give_created_enter_chat_id")
+	bot.SendMessage(fromID, reply, true, methods.MakeInlineKeyboardMarkupAuto(menus[:], 1))
 }
 
 // 处理红包留言
@@ -522,7 +532,7 @@ func (handler *GiveHandler) handleGenerateRedEnvelopes(userID int64, firstName s
 		Number:     info.number,
 		Memo:       info.memo,
 		Lucky:      info.typ == randRedEnvelopes,
-		Timestamp:  time.Now().Unix(),
+		Timestamp:  time.Now().UTC().Unix(),
 	}
 	if info.typ == equalRedEnvelopes {
 		redEnvelope.Value = info.amount

@@ -30,12 +30,7 @@ func Generate(amount uint32, number uint32) ([]int, error) {
 }
 
 // 随机器
-var randx *rand.Rand
-
-func init() {
-	// 初始化随机数种子
-	randx = rand.New(rand.NewSource(time.Now().UnixNano()))
-}
+var randx = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // 打乱数组
 func randomShuffle(array []int) []int {

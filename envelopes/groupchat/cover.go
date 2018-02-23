@@ -7,12 +7,7 @@ import (
 )
 
 // 随机器
-var randx *rand.Rand
-
-func init() {
-	// 初始化随机数种子
-	randx = rand.New(rand.NewSource(time.Now().UnixNano()))
-}
+var randx = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // Cover 封面信息
 type Cover struct {
