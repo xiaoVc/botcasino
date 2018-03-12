@@ -16,7 +16,7 @@ func (handler *GetChatIDHandler) Handle(bot *methods.BotExt, r *history.History,
 	fromID := update.Message.From.ID
 	reply := tr(fromID, "lng_chat_get_chat_id")
 	reply = fmt.Sprintf(reply, update.Message.Chat.ID, bot.UserName, bot.UserName)
-	bot.ReplyMessage(update.Message, reply, true, nil)
+	bot.ReplyMessageDisableWebPagePreview(update.Message, reply, true, nil)
 }
 
 // 消息路由
