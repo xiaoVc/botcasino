@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 	"syscall"
 
@@ -46,10 +45,6 @@ func main() {
 	if err != nil {
 		logger.Panic(err)
 	}
-
-	orderID, err := models.InsertWithdraw(1000, "byte01", "btc", 100, 1)
-	fmt.Println(orderID, err)
-	return
 
 	// 创建更新器
 	botUpdater, err := updater.NewUpdater(serveCfg.Port, serveCfg.Domain, serveCfg.APIWebsite)
