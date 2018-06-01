@@ -45,8 +45,8 @@ type Asset struct {
 	Freeze uint32 `json:"freeze"` // 冻结资产
 }
 
-// RedEnvelope 红包信息
-type RedEnvelope struct {
+// LuckyMoney 红包信息
+type LuckyMoney struct {
 	ID         uint64 `json:"id"`          // 红包ID
 	GroupID    int64  `json:"group_id"`    // 群组ID
 	MessageID  int32  `json:"message_id"`  // 消息ID
@@ -63,14 +63,14 @@ type RedEnvelope struct {
 	Timestamp  int64  `json:"timestamp"`   // 时间戳
 }
 
-// RedEnvelopeUser 红包用户
-type RedEnvelopeUser struct {
+// LuckyMoneyUser 红包用户
+type LuckyMoneyUser struct {
 	UserID    int64  `json:"user_id"`    // 用户ID
 	FirstName string `json:"first_name"` // 用户名
 }
 
-// RedEnvelopeRecord 红包记录
-type RedEnvelopeRecord struct {
-	Value int              `json:"value"`          // 红包金额
-	User  *RedEnvelopeUser `json:"user,omitempty"` // 用户信息
+// LuckyMoneyRecord 红包记录
+type LuckyMoneyRecord struct {
+	Value int             `json:"value"`          // 红包金额
+	User  *LuckyMoneyUser `json:"user,omitempty"` // 用户信息
 }

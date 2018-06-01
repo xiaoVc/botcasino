@@ -4,52 +4,52 @@ import (
 	"log"
 	"testing"
 
-	"github.com/zhangpanyi/botcasino/envelopes/algorithm"
+	"github.com/zhangpanyi/botcasino/logic/core"
 	"github.com/zhangpanyi/botcasino/storage"
 )
 
 // 测试创建红包
-func TestNewRedEnvelope(t *testing.T) {
+func TestNewLuckyMoney(t *testing.T) {
 	storage.Connect("test.db")
 
 	number := 1
-	envelopes, err := algorithm.Generate(10000, uint32(number))
+	arr, err := core.Generate(10000, uint32(number))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	redEnvelope := &storage.RedEnvelope{
+	luckyMoney := &storage.LuckyMoney{
 		Asset:  "bitCNY",
 		Amount: 100,
 		Number: uint32(number),
 	}
-	handler := storage.RedEnvelopeStorage{}
-	redEnvelope, err = handler.NewRedEnvelope(redEnvelope, envelopes)
+	handler := storage.LuckyMoneyStorage{}
+	luckyMoney, err = handler.NewLuckyMoney(luckyMoney, arr)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(redEnvelope)
+	t.Log(luckyMoney)
 }
 
 // 测试获取红包信息
-func TestGetRedEnvelope(t *testing.T) {
+func TestGetLuckyMoney(t *testing.T) {
 	storage.Connect("test.db")
 
-	handler := storage.RedEnvelopeStorage{}
-	redEnvelope, received, err := handler.GetRedEnvelope(1)
+	handler := storage.LuckyMoneyStorage{}
+	luckyMoney, received, err := handler.GetLuckyMoney(1)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(redEnvelope, received)
+	t.Log(luckyMoney, received)
 }
 
 // 测试领取红包
-func TestReceiveRedEnvelope(t *testing.T) {
+func TestReceiveLuckyMoney(t *testing.T) {
 	storage.Connect("test.db")
 
-	handler := storage.RedEnvelopeStorage{}
+	handler := storage.LuckyMoneyStorage{}
 	for i := 0; i < 100; i++ {
-		amount, number, err := handler.ReceiveRedEnvelope(1, int32(i), "zpy")
+		amount, number, err := handler.ReceiveLuckyMoney(1, int64(i), "zpy")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -61,7 +61,7 @@ func TestReceiveRedEnvelope(t *testing.T) {
 func TestGetTwoTxtremes(t *testing.T) {
 	storage.Connect("test.db")
 
-	handler := storage.RedEnvelopeStorage{}
+	handler := storage.LuckyMoneyStorage{}
 	min, max, err := handler.GetTwoTxtremes(100002)
 	if err != nil {
 		log.Fatalln(err)
@@ -70,11 +70,11 @@ func TestGetTwoTxtremes(t *testing.T) {
 }
 
 // 测试遍历红包
-func TestForeachRedEnvelopes(t *testing.T) {
+func TestForeachLuckyMoney(t *testing.T) {
 	storage.Connect("test.db")
 
-	handler := storage.RedEnvelopeStorage{}
-	err := handler.ForeachRedEnvelopes(100043, func(data *storage.RedEnvelope) {
+	handler := storage.LuckyMoneyStorage{}
+	err := handler.ForeachLuckyMoney(100043, func(data *storage.LuckyMoney) {
 		log.Println(data)
 	})
 	if err != nil {

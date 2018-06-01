@@ -1,4 +1,4 @@
-package expiretimer
+package timer
 
 import (
 	"container/heap"
@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/zhangpanyi/botcasino/config"
-	"github.com/zhangpanyi/botcasino/envelopes/groupchat"
+	"github.com/zhangpanyi/botcasino/logic/groupchat"
 	"github.com/zhangpanyi/botcasino/models"
 	"github.com/zhangpanyi/botcasino/storage"
 
@@ -23,7 +23,7 @@ var globalExpireTimer *expireTimer
 func StartTimerForOnce(bot *methods.BotExt, pool *updater.Pool) {
 	once.Do(func() {
 		// 获取最后过期红包
-		handler := storage.RedEnvelopeStorage{}
+		handler := storage.LuckyMoneyStorage{}
 		id, err := handler.GetLastExpired()
 		if err != nil && err != storage.ErrNoBucket {
 			logger.Panic(err)
@@ -31,7 +31,7 @@ func StartTimerForOnce(bot *methods.BotExt, pool *updater.Pool) {
 
 		// 遍历未过期列表
 		h := make(expireHeap, 0)
-		err = handler.ForeachRedEnvelopes(id+1, func(data *storage.RedEnvelope) {
+		err = handler.ForeachLuckyMoney(id+1, func(data *storage.LuckyMoney) {
 			heap.Push(&h, expire{ID: data.ID, Timestamp: data.Timestamp})
 		})
 		if err != nil && err != storage.ErrNoBucket {
@@ -53,8 +53,8 @@ func GetBot() *methods.BotExt {
 	return globalExpireTimer.bot
 }
 
-// AddRedEnvelope 添加红包
-func AddRedEnvelope(id uint64, timestamp int64) {
+// AddLuckyMoney 添加红包
+func AddLuckyMoney(id uint64, timestamp int64) {
 	globalExpireTimer.lock.Lock()
 	defer globalExpireTimer.lock.Unlock()
 	heap.Push(&globalExpireTimer.h, expire{ID: id, Timestamp: timestamp})
@@ -69,7 +69,7 @@ type expireTimer struct {
 }
 
 // 处理过期红包
-func (t *expireTimer) handleRedEnvelopeExpire() {
+func (t *expireTimer) handleLuckyMoneyExpire() {
 	now := time.Now().UTC().Unix()
 	dynamicCfg := config.GetDynamic()
 
@@ -80,7 +80,7 @@ func (t *expireTimer) handleRedEnvelopeExpire() {
 		t.lock.RUnlock()
 
 		// 判断是否过期
-		if now-data.Timestamp < dynamicCfg.RedEnvelopeExpire {
+		if now-data.Timestamp < dynamicCfg.LuckyMoneyExpire {
 			return
 		}
 
@@ -90,9 +90,9 @@ func (t *expireTimer) handleRedEnvelopeExpire() {
 		t.lock.Unlock()
 
 		id = e.ID
-		logger.Infof("On red envelope expired, %v", e.Timestamp)
+		logger.Infof("Lucky money expired, %v", e.Timestamp)
 		t.pool.Async(func() {
-			t.handleRedEnvelopeExpireAsync(e.ID)
+			t.handleLuckyMoneyExpireAsync(e.ID)
 		})
 		t.lock.RLock()
 	}
@@ -100,57 +100,57 @@ func (t *expireTimer) handleRedEnvelopeExpire() {
 
 	// 更新过期红包
 	if id != 0 {
-		handler := storage.RedEnvelopeStorage{}
+		handler := storage.LuckyMoneyStorage{}
 		if err := handler.SetLastExpired(id); err != nil {
-			logger.Warnf("Failed to set last expired  of red envelope, %v", err)
+			logger.Warnf("Failed to set last expired  of lucky money, %v", err)
 		}
 	}
 }
 
 // 异步处理过期红包
-func (t *expireTimer) handleRedEnvelopeExpireAsync(id uint64) {
+func (t *expireTimer) handleLuckyMoneyExpireAsync(id uint64) {
 	// 设置红包过期
-	handler := storage.RedEnvelopeStorage{}
+	handler := storage.LuckyMoneyStorage{}
 	if handler.IsExpired(id) {
 		return
 	}
 	err := handler.SetExpired(id)
 	if err != nil {
-		logger.Infof("Failed to set expired of red envelope, %v", err)
+		logger.Infof("Failed to set expired of lucky money, %v", err)
 		return
 	}
 
 	// 获取红包信息
-	redEnvelope, received, err := handler.GetRedEnvelope(id)
+	luckyMoney, received, err := handler.GetLuckyMoney(id)
 	if err != nil {
-		logger.Warnf("Failed to set expired of red envelope, not found red envelope, %d, %v", id, err)
+		logger.Warnf("Failed to set expired of lucky money, not found lucky money, %d, %v", id, err)
 		return
 	}
-	if received == redEnvelope.Number {
+	if received == luckyMoney.Number {
 		return
 	}
 
 	// 计算红包余额
-	balance := redEnvelope.Amount - redEnvelope.Received
-	if !redEnvelope.Lucky {
-		balance = redEnvelope.Amount*redEnvelope.Number - redEnvelope.Received
+	balance := luckyMoney.Amount - luckyMoney.Received
+	if !luckyMoney.Lucky {
+		balance = luckyMoney.Amount*luckyMoney.Number - luckyMoney.Received
 	}
 
 	// 返还红包余额
 	assetHandler := storage.AssetStorage{}
-	err = assetHandler.UnfreezeAsset(redEnvelope.SenderID, redEnvelope.Asset, balance)
+	err = assetHandler.UnfreezeAsset(luckyMoney.SenderID, luckyMoney.Asset, balance)
 	if err != nil {
-		logger.Errorf("Failed to return red envelope asset of expired, %v", err)
+		logger.Errorf("Failed to return lucky money asset of expired, %v", err)
 	} else {
-		logger.Errorf("Return red envelope asset of expired, UserID=%d, Asset=%s, Amount=%d",
-			redEnvelope.SenderID, redEnvelope.Asset, balance)
-		desc := fmt.Sprintf("您发放的红包(id: *%d*)过期无人领取, 退还余额*%.2f* *%s*", redEnvelope.ID,
-			float64(balance)/100.0, redEnvelope.Asset)
-		models.InsertHistory(redEnvelope.SenderID, desc)
+		logger.Errorf("Return lucky money asset of expired, UserID=%d, Asset=%s, Amount=%d",
+			luckyMoney.SenderID, luckyMoney.Asset, balance)
+		desc := fmt.Sprintf("您发放的红包(id: *%d*)过期无人领取, 退还余额*%.2f* *%s*", luckyMoney.ID,
+			float64(balance)/100.0, luckyMoney.Asset)
+		models.InsertHistory(luckyMoney.SenderID, desc)
 	}
 
 	// 更新聊天信息
-	groupchat.UpdateRedEnvelope(t.bot, redEnvelope, received)
+	groupchat.UpdateLuckyMoney(t.bot, luckyMoney, received)
 }
 
 // 事件循环
@@ -159,7 +159,7 @@ func (t *expireTimer) loop() {
 	for {
 		select {
 		case <-tickTimer.C:
-			t.handleRedEnvelopeExpire()
+			t.handleLuckyMoneyExpire()
 			tickTimer.Reset(time.Second)
 		}
 	}

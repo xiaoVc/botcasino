@@ -1,4 +1,4 @@
 package storage
 
-// DefaultRenvelopesID 默认红包ID
-const DefaultRenvelopesID = 100000
+// DefaultLuckyMoneyID 默认红包ID
+const DefaultLuckyMoneyID = 100000

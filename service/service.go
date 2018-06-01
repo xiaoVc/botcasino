@@ -7,10 +7,10 @@ import (
 	"strconv"
 
 	"github.com/zhangpanyi/basebot/logger"
+	"github.com/zhangpanyi/botcasino/logic/notice"
 	"github.com/zhangpanyi/botcasino/models"
 	"github.com/zhangpanyi/botcasino/protobuf/casinoserver"
 	"github.com/zhangpanyi/botcasino/storage"
-	"github.com/zhangpanyi/botcasino/envelopes/notify"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -117,7 +117,7 @@ func (*casinoServer) ReceiveNotice(ctx context.Context, req *casinoserver.Receiv
 		models.InsertHistory(userID, desc)
 
 		// 推送充值通知
-		notify.SendNotice(userID, desc)
+		notice.SendNotice(userID, desc)
 	}()
 	return new(casinoserver.ReceiveNoticeReply), nil
 }

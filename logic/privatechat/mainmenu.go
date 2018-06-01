@@ -145,7 +145,7 @@ func (handler *MainMenuHandler) replyMessage(userID int64) (string, []methods.In
 
 	// 生成菜单列表
 	menus := [...]methods.InlineKeyboardButton{
-		methods.InlineKeyboardButton{Text: tr(userID, "lng_priv_give_red_packets"), CallbackData: "/give/"},
+		methods.InlineKeyboardButton{Text: tr(userID, "lng_priv_give_lucky_money"), CallbackData: "/give/"},
 		methods.InlineKeyboardButton{Text: tr(userID, "lng_priv_history"), CallbackData: "/history/"},
 		methods.InlineKeyboardButton{Text: tr(userID, "lng_priv_deposit"), CallbackData: "/deposit/"},
 		methods.InlineKeyboardButton{Text: tr(userID, "lng_priv_withdraw"), CallbackData: "/withdraw/"},

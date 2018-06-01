@@ -3,6 +3,7 @@ package groupchat
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"strconv"
 	"time"
 
@@ -12,6 +13,9 @@ import (
 	"github.com/zhangpanyi/botcasino/config"
 	"github.com/zhangpanyi/botcasino/storage"
 )
+
+// 随机器
+var randx = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // 获取广告
 func getAd(botID int64) string {
@@ -29,60 +33,60 @@ func tr(userID int64, key string) string {
 	return config.GetLanguge().Value("zh_CN", key)
 }
 
-// SendRedEnvelopeToGroup 发送红包到群组
-func SendRedEnvelopeToGroup(bot *methods.BotExt, userID, chatID int64, id uint64) error {
+// SendLuckyMoneyToGroup 发送红包到群组
+func SendLuckyMoneyToGroup(bot *methods.BotExt, userID, chatID int64, id uint64) error {
 	// 获取红包信息
-	newHandler := storage.RedEnvelopeStorage{}
-	redEnvelope, received, err := newHandler.GetRedEnvelope(id)
+	newHandler := storage.LuckyMoneyStorage{}
+	luckyMoney, received, err := newHandler.GetLuckyMoney(id)
 	if err != nil {
-		logger.Errorf("Failed to get red envelope, %v", err)
+		logger.Errorf("Failed to get lucky money, %v", err)
 		return err
 	}
 
 	// 红包身份验证
-	if userID != redEnvelope.SenderID {
+	if userID != luckyMoney.SenderID {
 		return errors.New("auth failed")
 	}
 
 	// 检查重复激活
-	if redEnvelope.Active {
+	if luckyMoney.Active {
 		return errors.New("auth failed")
 	}
 
 	// 检查红包过期
 	now := time.Now().UTC().Unix()
 	dynamicCfg := config.GetDynamic()
-	if now-redEnvelope.Timestamp >= dynamicCfg.RedEnvelopeExpire {
+	if now-luckyMoney.Timestamp >= dynamicCfg.LuckyMoneyExpire {
 		return errors.New("already activated")
 	}
 
 	// 生成菜单列表
-	data := strconv.FormatUint(redEnvelope.ID, 10)
+	data := strconv.FormatUint(luckyMoney.ID, 10)
 	menus := [...]methods.InlineKeyboardButton{
 		methods.InlineKeyboardButton{Text: tr(0, "lng_chat_receive"), CallbackData: data},
 	}
 
 	// 回复红包信息
 	reply := tr(0, "lng_chat_welcome")
-	typ := redEnvelopesTypeToString(redEnvelope.Lucky)
-	amount := fmt.Sprintf("%.2f", float64(redEnvelope.Amount)/100.0)
-	if !redEnvelope.Lucky {
-		amount = fmt.Sprintf("%.2f", float64(redEnvelope.Amount*redEnvelope.Number)/100.0)
+	typ := luckyMoneysTypeToString(luckyMoney.Lucky)
+	amount := fmt.Sprintf("%.2f", float64(luckyMoney.Amount)/100.0)
+	if !luckyMoney.Lucky {
+		amount = fmt.Sprintf("%.2f", float64(luckyMoney.Amount*luckyMoney.Number)/100.0)
 	}
-	reply = fmt.Sprintf(reply, typ, received, redEnvelope.Number, amount,
-		storage.GetAsset(redEnvelope.Asset), redEnvelope.SenderName,
-		redEnvelope.Memo, getAd(bot.ID), bot.UserName, redEnvelope.ID, bot.UserName, redEnvelope.ID)
+	reply = fmt.Sprintf(reply, typ, received, luckyMoney.Number, amount,
+		storage.GetAsset(luckyMoney.Asset), luckyMoney.SenderName,
+		luckyMoney.Memo, getAd(bot.ID), bot.UserName, luckyMoney.ID, bot.UserName, luckyMoney.ID)
 	markup := methods.MakeInlineKeyboardMarkup(menus[:], 1)
 	message, err := bot.SendMessageDisableWebPagePreview(chatID, reply, true, markup)
 	if err != nil {
-		logger.Errorf("Failed to send red envelope info, %v", err)
+		logger.Errorf("Failed to send lucky money info, %v", err)
 		return err
 	}
 
 	// 激活红包
-	err = newHandler.ActiveRedEnvelope(id, userID, message.Chat.ID, message.MessageID)
+	err = newHandler.ActiveLuckyMoney(id, userID, message.Chat.ID, message.MessageID)
 	if err != nil {
-		logger.Errorf("Failed to active red envelope, %v", err)
+		logger.Errorf("Failed to active lucky money, %v", err)
 		return err
 	}
 	return nil

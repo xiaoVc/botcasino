@@ -1,4 +1,4 @@
-package expiretimer
+package timer
 
 // 过期信息
 type expire struct {

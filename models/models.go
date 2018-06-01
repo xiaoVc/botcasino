@@ -8,30 +8,28 @@ import (
 
 	db "upper.io/db.v3"
 	"upper.io/db.v3/lib/sqlbuilder"
-	"upper.io/db.v3/mysql"
+	"upper.io/db.v3/sqlite"
 )
 
 // 数据库连接池
 var pools *sqlbuilder.Database
 
-// Connect 连接到MySQL
-func Connect(settings db.ConnectionURL, conns int) error {
+// Connect 连接数据库
+func Connect(settings db.ConnectionURL) error {
 	if pools != nil {
 		return nil
 	}
 
-	db, err := mysql.Open(settings)
+	db, err := sqlite.Open(settings)
 	if err != nil {
 		return err
 	}
 
 	db.SetLogging(false)
-	db.SetMaxOpenConns(conns)
-	db.SetMaxIdleConns(conns)
 
 	if err = db.Ping(); err != nil {
 		db.Close()
-		logger.Errorf("Failed to connect to mysql, %v", err)
+		logger.Errorf("Failed to connect to sqlite, %v", err)
 	}
 	pools = &db
 	return nil

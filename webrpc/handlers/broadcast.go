@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/zhangpanyi/botcasino/envelopes/expiretimer"
+	"github.com/zhangpanyi/botcasino/logic/timer"
 	"github.com/zhangpanyi/botcasino/pusher"
 	"github.com/zhangpanyi/botcasino/storage"
 )
@@ -40,7 +40,7 @@ func Broadcast(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, userID := range subscribers {
-		pusher.To(expiretimer.GetBot(), userID, request.Message, true, nil)
+		pusher.To(timer.GetBot(), userID, request.Message, true, nil)
 	}
 
 	reply := BroadcastReply{OK: true}

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/zhangpanyi/botcasino/config"
-	"github.com/zhangpanyi/botcasino/envelopes/algorithm"
-	"github.com/zhangpanyi/botcasino/envelopes/expiretimer"
+	"github.com/zhangpanyi/botcasino/logic/core"
+	"github.com/zhangpanyi/botcasino/logic/timer"
 	"github.com/zhangpanyi/botcasino/models"
 	"github.com/zhangpanyi/botcasino/storage"
 
@@ -56,14 +56,14 @@ func init() {
 
 var (
 	// 随机红包
-	randRedEnvelopes = "rand"
+	randLuckyMoney = "rand"
 	// 普通红包
-	equalRedEnvelopes = "equal"
+	equalLuckyMoney = "equal"
 )
 
 // 红包类型转字符串
-func redEnvelopesTypeToString(fromID int64, typ string) string {
-	if typ == randRedEnvelopes {
+func luckyMoneysTypeToString(fromID int64, typ string) string {
+	if typ == randLuckyMoney {
 		return tr(fromID, "lng_priv_give_rand")
 	}
 	return tr(fromID, "lng_priv_give_equal")
@@ -74,7 +74,7 @@ type GiveHandler struct {
 }
 
 // 红包信息
-type redEnvelopes struct {
+type luckyMoneys struct {
 	typ    string // 红包类型
 	asset  string // 资产类型
 	amount uint32 // 红包金额
@@ -93,7 +93,7 @@ func (handler *GiveHandler) Handle(bot *methods.BotExt, r *history.History, upda
 	}
 
 	// 处理选择类型
-	info := redEnvelopes{}
+	info := luckyMoneys{}
 	result := reMathGiveAsset.FindStringSubmatch(data)
 	if len(result) == 2 {
 		r.Clear()
@@ -107,7 +107,7 @@ func (handler *GiveHandler) Handle(bot *methods.BotExt, r *history.History, upda
 	if len(result) == 3 {
 		info.typ = result[1]
 		info.asset = result[2]
-		handler.handleEnvelopesAmount(bot, r, &info, update)
+		handler.handleLuckyMoneyAmount(bot, r, &info, update)
 		return
 	}
 
@@ -118,7 +118,7 @@ func (handler *GiveHandler) Handle(bot *methods.BotExt, r *history.History, upda
 		info.asset = result[2]
 		amount, _ := strconv.ParseFloat(result[3], 10)
 		info.amount = uint32(amount * 100)
-		handler.handleEnvelopesNumber(bot, r, &info, update, true)
+		handler.handleLuckyMoneyNumber(bot, r, &info, update, true)
 		return
 	}
 
@@ -131,7 +131,7 @@ func (handler *GiveHandler) Handle(bot *methods.BotExt, r *history.History, upda
 		info.amount = uint32(amount * 100)
 		number, _ := strconv.Atoi(result[4])
 		info.number = uint32(number)
-		handler.handleEnvelopesMemo(bot, r, &info, update)
+		handler.handleLuckyMoneyMemo(bot, r, &info, update)
 		return
 	}
 
@@ -181,11 +181,11 @@ func (handler *GiveHandler) handleChooseType(bot *methods.BotExt, query *types.C
 	menus := [...]methods.InlineKeyboardButton{
 		methods.InlineKeyboardButton{
 			Text:         tr(fromID, "lng_priv_give_rand"),
-			CallbackData: data + randRedEnvelopes + "/",
+			CallbackData: data + randLuckyMoney + "/",
 		},
 		methods.InlineKeyboardButton{
 			Text:         tr(fromID, "lng_priv_give_equal"),
-			CallbackData: data + equalRedEnvelopes + "/",
+			CallbackData: data + equalLuckyMoney + "/",
 		},
 		methods.InlineKeyboardButton{
 			Text:         tr(fromID, "lng_back_superior"),
@@ -201,7 +201,7 @@ func (handler *GiveHandler) handleChooseType(bot *methods.BotExt, query *types.C
 }
 
 // 处理选择资产
-func (handler *GiveHandler) handleChooseAsset(bot *methods.BotExt, info *redEnvelopes, query *types.CallbackQuery) {
+func (handler *GiveHandler) handleChooseAsset(bot *methods.BotExt, info *luckyMoneys, query *types.CallbackQuery) {
 	// 生成菜单列表
 	data := query.Data
 	fromID := query.From.ID
@@ -220,13 +220,13 @@ func (handler *GiveHandler) handleChooseAsset(bot *methods.BotExt, info *redEnve
 	bot.AnswerCallbackQuery(query, "", false, "", 0)
 	markup := methods.MakeInlineKeyboardMarkup(menus[:], 2, 1, 1)
 	reply := fmt.Sprintf(tr(fromID, "lng_priv_give_choose_asset"), bitCNY, bitUSD,
-		redEnvelopesTypeToString(fromID, info.typ))
+		luckyMoneysTypeToString(fromID, info.typ))
 	bot.EditMessageReplyMarkup(query.Message, reply, true, markup)
 }
 
 // 处理输入红包金额
-func (handler *GiveHandler) handleEnterEnvelopesAmount(bot *methods.BotExt, r *history.History,
-	info *redEnvelopes, update *types.Update, enterAmount string) {
+func (handler *GiveHandler) handleEnterLuckyMoneyAmount(bot *methods.BotExt, r *history.History,
+	info *luckyMoneys, update *types.Update, enterAmount string) {
 
 	// 生成菜单列表
 	query := update.CallbackQuery
@@ -268,17 +268,17 @@ func (handler *GiveHandler) handleEnterEnvelopesAmount(bot *methods.BotExt, r *h
 	r.Clear()
 	info.amount = uint32(amount * 100)
 	update.CallbackQuery.Data = data + enterAmount + "/"
-	handler.handleEnvelopesNumber(bot, r, info, update, false)
+	handler.handleLuckyMoneyNumber(bot, r, info, update, false)
 }
 
 // 处理红包金额
-func (handler *GiveHandler) handleEnvelopesAmount(bot *methods.BotExt, r *history.History, info *redEnvelopes,
+func (handler *GiveHandler) handleLuckyMoneyAmount(bot *methods.BotExt, r *history.History, info *luckyMoneys,
 	update *types.Update) {
 
 	// 处理输入金额
 	back, err := r.Back()
 	if err == nil && back.Message != nil {
-		handler.handleEnterEnvelopesAmount(bot, r, info, update, back.Message.Text)
+		handler.handleEnterLuckyMoneyAmount(bot, r, info, update, back.Message.Text)
 		return
 	}
 
@@ -290,7 +290,7 @@ func (handler *GiveHandler) handleEnvelopesAmount(bot *methods.BotExt, r *histor
 	// 回复请求结果
 	r.Clear().Push(update)
 	amount := tr(fromID, "lng_priv_give_amount")
-	if info.typ == equalRedEnvelopes {
+	if info.typ == equalLuckyMoney {
 		amount = tr(fromID, "lng_priv_give_value")
 	}
 
@@ -300,13 +300,13 @@ func (handler *GiveHandler) handleEnvelopesAmount(bot *methods.BotExt, r *histor
 	reply := tr(fromID, "lng_priv_give_set_amount")
 	bitCNY := getUserAssetAmount(fromID, storage.BitCNYSymbol)
 	bitUSD := getUserAssetAmount(fromID, storage.BitUSDSymbol)
-	reply = fmt.Sprintf(reply, amount, bitCNY, bitUSD, redEnvelopesTypeToString(fromID, info.typ), info.asset)
+	reply = fmt.Sprintf(reply, amount, bitCNY, bitUSD, luckyMoneysTypeToString(fromID, info.typ), info.asset)
 	bot.EditMessageReplyMarkup(query.Message, reply, true, markup)
 }
 
 // 处理输入红包个数
-func (handler *GiveHandler) handleEnterEnvelopesNumber(bot *methods.BotExt, r *history.History,
-	info *redEnvelopes, update *types.Update, enterNumber string) {
+func (handler *GiveHandler) handleEnterLuckyMoneyNumber(bot *methods.BotExt, r *history.History,
+	info *luckyMoneys, update *types.Update, enterNumber string) {
 
 	// 生成菜单列表
 	query := update.CallbackQuery
@@ -329,14 +329,14 @@ func (handler *GiveHandler) handleEnterEnvelopesNumber(bot *methods.BotExt, r *h
 
 	// 检查账户余额
 	balance := getUserAssetAmount(fromID, storage.GetAssetSymbol(info.asset))
-	if info.typ == randRedEnvelopes && uint32(number) > info.amount {
+	if info.typ == randLuckyMoney && uint32(number) > info.amount {
 		reply := tr(fromID, "lng_priv_give_set_number_no_asset")
 		handlerError(fmt.Sprintf(reply, info.asset, balance))
 		return
 	}
 
 	fBalance, _ := strconv.ParseFloat(balance, 10)
-	if info.typ == equalRedEnvelopes && (info.amount*uint32(number) > uint32(fBalance*100)) {
+	if info.typ == equalLuckyMoney && (info.amount*uint32(number) > uint32(fBalance*100)) {
 		reply := tr(fromID, "lng_priv_give_set_number_no_asset")
 		handlerError(fmt.Sprintf(reply, info.asset, balance))
 		return
@@ -346,17 +346,17 @@ func (handler *GiveHandler) handleEnterEnvelopesNumber(bot *methods.BotExt, r *h
 	r.Clear()
 	info.number = uint32(number)
 	update.CallbackQuery.Data += enterNumber + "/"
-	handler.handleEnvelopesMemo(bot, r, info, update)
+	handler.handleLuckyMoneyMemo(bot, r, info, update)
 }
 
 // 处理红包个数
-func (handler *GiveHandler) handleEnvelopesNumber(bot *methods.BotExt, r *history.History, info *redEnvelopes,
+func (handler *GiveHandler) handleLuckyMoneyNumber(bot *methods.BotExt, r *history.History, info *luckyMoneys,
 	update *types.Update, edit bool) {
 
 	// 处理输入个数
 	back, err := r.Back()
 	if err == nil && back.Message != nil {
-		handler.handleEnterEnvelopesNumber(bot, r, info, update, back.Message.Text)
+		handler.handleEnterLuckyMoneyNumber(bot, r, info, update, back.Message.Text)
 		return
 	}
 
@@ -367,20 +367,20 @@ func (handler *GiveHandler) handleEnvelopesNumber(bot *methods.BotExt, r *histor
 	markup := makeGiveBaseMenus(fromID, query.Data)
 
 	amount := tr(fromID, "lng_priv_give_amount")
-	if info.typ == equalRedEnvelopes {
+	if info.typ == equalLuckyMoney {
 		amount = tr(fromID, "lng_priv_give_value")
 	}
 
 	reply := ""
-	if info.typ == randRedEnvelopes {
+	if info.typ == randLuckyMoney {
 		reply = tr(fromID, "lng_priv_give_set_number")
-		reply = fmt.Sprintf(reply, redEnvelopesTypeToString(fromID, info.typ), info.asset,
+		reply = fmt.Sprintf(reply, luckyMoneysTypeToString(fromID, info.typ), info.asset,
 			amount, fmt.Sprintf("%.2f", float64(info.amount)/100.0), info.asset)
 	} else {
 		bitCNY := getUserAssetAmount(fromID, storage.BitCNYSymbol)
 		bitUSD := getUserAssetAmount(fromID, storage.BitUSDSymbol)
 		reply = tr(fromID, "lng_priv_give_set_number_equal")
-		reply = fmt.Sprintf(reply, bitCNY, bitUSD, redEnvelopesTypeToString(fromID, info.typ),
+		reply = fmt.Sprintf(reply, bitCNY, bitUSD, luckyMoneysTypeToString(fromID, info.typ),
 			info.asset, amount, fmt.Sprintf("%.2f", float64(info.amount)/100.0), info.asset)
 	}
 
@@ -393,8 +393,8 @@ func (handler *GiveHandler) handleEnvelopesNumber(bot *methods.BotExt, r *histor
 }
 
 // 处理输入红包留言
-func (handler *GiveHandler) handleEnterEnvelopesMemo(bot *methods.BotExt, r *history.History,
-	info *redEnvelopes, update *types.Update, memo string) {
+func (handler *GiveHandler) handleEnterLuckyMoneyMemo(bot *methods.BotExt, r *history.History,
+	info *luckyMoneys, update *types.Update, memo string) {
 
 	// 生成菜单列表
 	query := update.CallbackQuery
@@ -420,9 +420,9 @@ func (handler *GiveHandler) handleEnterEnvelopesMemo(bot *methods.BotExt, r *his
 
 	// 处理生成红包
 	info.memo = memo
-	redEnvelope, err := handler.handleGenerateRedEnvelopes(fromID, query.From.FirstName, info)
+	luckyMoney, err := handler.handleGenerateLuckyMoney(fromID, query.From.FirstName, info)
 	if err != nil {
-		logger.Warnf("Failed to create red envelopes, %v", err)
+		logger.Warnf("Failed to create lucky money, %v", err)
 		handlerError(tr(fromID, "lng_priv_give_create_failed"))
 		return
 	}
@@ -435,7 +435,7 @@ func (handler *GiveHandler) handleEnterEnvelopesMemo(bot *methods.BotExt, r *his
 	// 回复红包内容
 	r.Clear()
 	reply := tr(fromID, "lng_priv_give_created")
-	reply = fmt.Sprintf(reply, bot.UserName, redEnvelope.ID, bot.UserName, redEnvelope.ID)
+	reply = fmt.Sprintf(reply, bot.UserName, luckyMoney.ID, bot.UserName, luckyMoney.ID)
 	bot.AnswerCallbackQuery(query, "", false, "", 0)
 	bot.SendMessageDisableWebPagePreview(fromID, reply, true, &markup)
 
@@ -443,7 +443,7 @@ func (handler *GiveHandler) handleEnterEnvelopesMemo(bot *methods.BotExt, r *his
 	menus := [...]methods.InlineKeyboardButton{
 		methods.InlineKeyboardButton{
 			Text:         tr(fromID, "lng_chat_enter_chat_id"),
-			CallbackData: fmt.Sprintf("/chatid/%d/", redEnvelope.ID),
+			CallbackData: fmt.Sprintf("/chatid/%d/", luckyMoney.ID),
 		},
 	}
 	reply = tr(fromID, "lng_priv_give_created_enter_chat_id")
@@ -451,13 +451,13 @@ func (handler *GiveHandler) handleEnterEnvelopesMemo(bot *methods.BotExt, r *his
 }
 
 // 处理红包留言
-func (handler *GiveHandler) handleEnvelopesMemo(bot *methods.BotExt, r *history.History, info *redEnvelopes,
+func (handler *GiveHandler) handleLuckyMoneyMemo(bot *methods.BotExt, r *history.History, info *luckyMoneys,
 	update *types.Update) {
 
 	// 处理输入留言
 	back, err := r.Back()
 	if err == nil && back.Message != nil {
-		handler.handleEnterEnvelopesMemo(bot, r, info, update, back.Message.Text)
+		handler.handleEnterLuckyMoneyMemo(bot, r, info, update, back.Message.Text)
 		return
 	}
 
@@ -474,23 +474,23 @@ func (handler *GiveHandler) handleEnvelopesMemo(bot *methods.BotExt, r *history.
 	// 提示输入红包留言
 	r.Clear().Push(update)
 	amount := tr(fromID, "lng_priv_give_amount")
-	if info.typ == equalRedEnvelopes {
+	if info.typ == equalLuckyMoney {
 		amount = tr(fromID, "lng_priv_give_value")
 	}
 	reply := tr(fromID, "lng_priv_give_set_memo")
-	reply = fmt.Sprintf(reply, redEnvelopesTypeToString(fromID, info.typ), info.asset,
+	reply = fmt.Sprintf(reply, luckyMoneysTypeToString(fromID, info.typ), info.asset,
 		amount, fmt.Sprintf("%.2f", float64(info.amount)/100.0), info.asset, info.number)
 	bot.SendMessage(fromID, reply, true, markup)
 	bot.AnswerCallbackQuery(query, tr(fromID, "lng_priv_give_set_memo_answer"), false, "", 0)
 }
 
 // 处理生成红包
-func (handler *GiveHandler) handleGenerateRedEnvelopes(userID int64, firstName string,
-	info *redEnvelopes) (*storage.RedEnvelope, error) {
+func (handler *GiveHandler) handleGenerateLuckyMoney(userID int64, firstName string,
+	info *luckyMoneys) (*storage.LuckyMoney, error) {
 
 	// 冻结资金
 	amount := info.amount
-	if info.typ == equalRedEnvelopes {
+	if info.typ == equalLuckyMoney {
 		amount = info.amount * info.number
 	}
 	assetStorage := storage.AssetStorage{}
@@ -503,11 +503,11 @@ func (handler *GiveHandler) handleGenerateRedEnvelopes(userID int64, firstName s
 		userID, info.asset, amount)
 
 	// 生成红包
-	var envelopes []int
-	if info.typ == randRedEnvelopes {
-		envelopes, err = algorithm.Generate(amount, info.number)
+	var luckyMoneyArr []int
+	if info.typ == randLuckyMoney {
+		luckyMoneyArr, err = core.Generate(amount, info.number)
 		if err != nil {
-			logger.Errorf("Failed to generate red envelopes, user_id: %v, %v", userID, err)
+			logger.Errorf("Failed to generate lucky money, user_id: %v, %v", userID, err)
 
 			// 解冻资金
 			if err = assetStorage.UnfreezeAsset(userID, info.asset, amount); err != nil {
@@ -517,30 +517,30 @@ func (handler *GiveHandler) handleGenerateRedEnvelopes(userID int64, firstName s
 			return nil, err
 		}
 	} else {
-		envelopes = make([]int, 0, info.number)
+		luckyMoneyArr = make([]int, 0, info.number)
 		for i := 0; i < int(info.number); i++ {
-			envelopes = append(envelopes, int(info.amount))
+			luckyMoneyArr = append(luckyMoneyArr, int(info.amount))
 		}
 	}
 
 	// 保存红包信息
-	redEnvelope := storage.RedEnvelope{
+	luckyMoney := storage.LuckyMoney{
 		SenderID:   userID,
 		SenderName: firstName,
 		Asset:      info.asset,
 		Amount:     info.amount,
 		Number:     info.number,
 		Memo:       info.memo,
-		Lucky:      info.typ == randRedEnvelopes,
+		Lucky:      info.typ == randLuckyMoney,
 		Timestamp:  time.Now().UTC().Unix(),
 	}
-	if info.typ == equalRedEnvelopes {
-		redEnvelope.Value = info.amount
+	if info.typ == equalLuckyMoney {
+		luckyMoney.Value = info.amount
 	}
-	redEnvelopeStorage := storage.RedEnvelopeStorage{}
-	newRedEnvelope, err := redEnvelopeStorage.NewRedEnvelope(&redEnvelope, envelopes)
+	luckyMoneyStorage := storage.LuckyMoneyStorage{}
+	newLuckyMoney, err := luckyMoneyStorage.NewLuckyMoney(&luckyMoney, luckyMoneyArr)
 	if err != nil {
-		logger.Errorf("Failed to new red envelopes, user_id: %v, %v", userID, err)
+		logger.Errorf("Failed to new lucky money, user_id: %v, %v", userID, err)
 
 		// 解冻资金
 		if err = assetStorage.UnfreezeAsset(userID, info.asset, amount); err != nil {
@@ -549,16 +549,16 @@ func (handler *GiveHandler) handleGenerateRedEnvelopes(userID int64, firstName s
 		}
 		return nil, err
 	}
-	logger.Errorf("Generate red envelopes, id: %v, user_id: %v, asset: %v, amount: %v",
-		newRedEnvelope.ID, userID, info.asset, amount)
+	logger.Errorf("Generate lucky money, id: %v, user_id: %v, asset: %v, amount: %v",
+		newLuckyMoney.ID, userID, info.asset, amount)
 
 	// 过期计时
-	expiretimer.AddRedEnvelope(redEnvelope.ID, redEnvelope.Timestamp)
+	timer.AddLuckyMoney(luckyMoney.ID, luckyMoney.Timestamp)
 
 	// 记录操作历史
-	desc := fmt.Sprintf("您发放了红包(id: *%d*), 花费*%.2f* *%s*", redEnvelope.ID,
-		float64(amount)/100.0, redEnvelope.Asset)
+	desc := fmt.Sprintf("您发放了红包(id: *%d*), 花费*%.2f* *%s*", luckyMoney.ID,
+		float64(amount)/100.0, luckyMoney.Asset)
 	models.InsertHistory(userID, desc)
 
-	return newRedEnvelope, nil
+	return newLuckyMoney, nil
 }

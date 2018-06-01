@@ -23,4 +23,4 @@ fixed_fee_amount:
   usd: 50
 
 # 红包过期时间(秒)
-red_envelope_expire: 86400
+lucky_money_expire: 86400

@@ -1,9 +1,10 @@
-package notify
+package notice
 
 import (
 	"sync"
-	"github.com/zhangpanyi/botcasino/pusher"
+
 	"github.com/zhangpanyi/basebot/telegram/methods"
+	"github.com/zhangpanyi/botcasino/pusher"
 )
 
 var once sync.Once

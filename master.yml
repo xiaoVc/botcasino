@@ -31,28 +31,12 @@ languages: "languages"
 # BoltDB路径
 boltdb_path: "master.db"
 
-# 红包封面图
-red_envelopes_cover:
-  - "cover/101.webp"
-  - "cover/102.webp"
-
 # 钱包服务配置
 wallet_service:
   address: "127.0.0.1"
   port: 17128
 
 # 数据库配置
-mysql:
+sqlite:
   # 数据库名
-  db: "casinologs"
-  # 服务地址
-  host: "127.0.0.1:3306"
-  # 访问用户
-  user: "root"
-  # 访问密码
-  password: ""
-  # 连接数量
-  conns: 1
-  # 附加选项
-  options:
-    charset: "utf8mb4"
+  db: "sqlitedb/casinologs.db"

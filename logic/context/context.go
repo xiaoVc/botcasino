@@ -1,4 +1,4 @@
-package caches
+package context
 
 import (
 	"sync"
@@ -16,7 +16,7 @@ func CreateManagerForOnce(bucketNum uint32) {
 		var err error
 		manager, err = history.NewManager(bucketNum)
 		if err != nil {
-			logger.Panicf("Failed to create manager for envelopes, %v", err)
+			logger.Panicf("Failed to create manager for lucky money, %v", err)
 		}
 	})
 }

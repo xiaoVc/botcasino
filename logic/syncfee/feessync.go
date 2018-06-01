@@ -1,4 +1,4 @@
-package feessync
+package syncfee
 
 import (
 	"errors"

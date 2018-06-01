@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/zhangpanyi/botcasino/envelopes/privatechat"
+	"github.com/zhangpanyi/botcasino/logic/privatechat"
 	"github.com/zhangpanyi/botcasino/withdraw"
 
 	"github.com/zhangpanyi/basebot/logger"

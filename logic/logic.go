@@ -1,10 +1,10 @@
-package envelopes
+package logic
 
 import (
 	"github.com/zhangpanyi/botcasino/config"
-	"github.com/zhangpanyi/botcasino/envelopes/caches"
-	"github.com/zhangpanyi/botcasino/envelopes/groupchat"
-	"github.com/zhangpanyi/botcasino/envelopes/privatechat"
+	"github.com/zhangpanyi/botcasino/logic/context"
+	"github.com/zhangpanyi/botcasino/logic/groupchat"
+	"github.com/zhangpanyi/botcasino/logic/privatechat"
 	"github.com/zhangpanyi/botcasino/storage"
 
 	"github.com/zhangpanyi/basebot/logger"
@@ -30,13 +30,13 @@ func NewUpdate(bot *methods.BotExt, update *types.Update) {
 		fromID = update.CallbackQuery.From.ID
 		chatType = update.CallbackQuery.Message.Chat.Type
 	} else {
-		logger.Debugf("Envelopes bot update, update_id: %v", update.UpdateID)
+		logger.Debugf("Lucky money bot update, update_id: %v", update.UpdateID)
 		return
 	}
-	logger.Debugf("Envelopes bot update, update_id: %v, user_id: %v", update.UpdateID, fromID)
+	logger.Debugf("Lucky money bot update, update_id: %v, user_id: %v", update.UpdateID, fromID)
 
 	// 获取操作记录
-	r, err := caches.GetRecord(uint32(fromID))
+	r, err := context.GetRecord(uint32(fromID))
 	if err != nil {
 		logger.Warnf("Failed to get bot record, bot_id: %v, %v, %v", bot.ID, fromID, err)
 		return
@@ -55,6 +55,6 @@ func NewUpdate(bot *methods.BotExt, update *types.Update) {
 
 	// 删除空操作记录
 	if r.Empty() {
-		caches.DelRecord(uint32(fromID))
+		context.DelRecord(uint32(fromID))
 	}
 }

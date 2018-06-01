@@ -8,15 +8,15 @@ import (
 	"github.com/zhangpanyi/basebot/history"
 	"github.com/zhangpanyi/basebot/telegram/methods"
 	"github.com/zhangpanyi/basebot/telegram/types"
-	"github.com/zhangpanyi/botcasino/envelopes/groupchat"
+	"github.com/zhangpanyi/botcasino/logic/groupchat"
 )
 
 // 匹配红包ID
-var reMathEnvelopeID *regexp.Regexp
+var reMathLuckyMoneyID *regexp.Regexp
 
 func init() {
 	var err error
-	reMathEnvelopeID, err = regexp.Compile("^/chatid/(\\d+)/")
+	reMathLuckyMoneyID, err = regexp.Compile("^/chatid/(\\d+)/")
 	if err != nil {
 		panic(err)
 	}
@@ -41,7 +41,7 @@ func (*SelectGroupHandler) Handle(bot *methods.BotExt, r *history.History, updat
 
 	// 获取红包ID
 	data := update.CallbackQuery.Data
-	result := reMathEnvelopeID.FindStringSubmatch(data)
+	result := reMathLuckyMoneyID.FindStringSubmatch(data)
 	if len(result) != 2 {
 		return
 	}
@@ -62,7 +62,7 @@ func (*SelectGroupHandler) Handle(bot *methods.BotExt, r *history.History, updat
 	}
 
 	// 发送红包到群组
-	err = groupchat.SendRedEnvelopeToGroup(bot, fromID, chatID, id)
+	err = groupchat.SendLuckyMoneyToGroup(bot, fromID, chatID, id)
 	if err != nil {
 		reply := tr(fromID, "lng_chat_enter_chat_id_send_failed")
 		bot.SendMessage(fromID, reply, true, nil)

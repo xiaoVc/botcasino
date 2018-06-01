@@ -20,23 +20,23 @@ var (
 	ErrAlreadyActivated = errors.New("already activated")
 	// ErrPermissionDenied 没有权限
 	ErrPermissionDenied = errors.New("permission denied")
-	// ErrRedEnvelopedExpired 红包已过期
-	ErrRedEnvelopedExpired = errors.New("red envelope expired")
+	// ErrLuckyMoneydExpired 红包已过期
+	ErrLuckyMoneydExpired = errors.New("lucky money expired")
 )
 
 // ********************** 结构图 **********************
 // {
-// 	"red_envelopes": {
+// 	"lucky_money": {
 // 		"sid": {
 // 			"seq": 0,					// 红包领取序列
 // 			"min": 0,					// 手气最烂序列
 // 			"max": 0,					// 手气最佳序列
-// 			"base": types.RedEnvelope	// 红包基本信息
+// 			"base": types.LuckyMoney	// 红包基本信息
 //			"users": {					// 红包已领用户
 //				"user_id": ""
 //			}
 // 			"record": {					// 红包领取记录
-// 				"seq": types.RedEnvelopeRecord
+// 				"seq": types.LuckyMoneyRecord
 // 			}
 //			"expired": true				// 红包过期
 // 		},
@@ -46,27 +46,27 @@ var (
 // }
 // ***************************************************
 
-// RedEnvelopeStorage 红包存储
-type RedEnvelopeStorage struct {
+// LuckyMoneyStorage 红包存储
+type LuckyMoneyStorage struct {
 }
 
 // 创建领取记录
-func (handler *RedEnvelopeStorage) newRecord(tx *bolt.Tx, sid string,
-	envelopes []int) (int, int, error) {
+func (handler *LuckyMoneyStorage) newRecord(tx *bolt.Tx, sid string,
+	luckyMoneyArr []int) (int, int, error) {
 
 	minValueSeq, maxValueSeq := 0, 0
 	minValue, maxValue := math.MaxInt32, 0
-	recordBucket, err := ensureBucketExists(tx, "red_envelopes", sid, "record")
+	recordBucket, err := ensureBucketExists(tx, "lucky_money", sid, "record")
 	if err != nil {
 		return 0, 0, err
 	}
-	for i := range envelopes {
+	for i := range luckyMoneyArr {
 		seq, err := recordBucket.NextSequence()
 		if err != nil {
 			return 0, 0, err
 		}
 
-		val := RedEnvelopeRecord{Value: envelopes[i]}
+		val := LuckyMoneyRecord{Value: luckyMoneyArr[i]}
 		jsb, err := json.Marshal(&val)
 		if err != nil {
 			return 0, 0, err
@@ -78,29 +78,29 @@ func (handler *RedEnvelopeStorage) newRecord(tx *bolt.Tx, sid string,
 			return 0, 0, err
 		}
 
-		if envelopes[i] < minValue {
-			minValue = envelopes[i]
+		if luckyMoneyArr[i] < minValue {
+			minValue = luckyMoneyArr[i]
 			minValueSeq = int(seq)
 		}
 
-		if envelopes[i] > maxValue {
-			maxValue = envelopes[i]
+		if luckyMoneyArr[i] > maxValue {
+			maxValue = luckyMoneyArr[i]
 			maxValueSeq = int(seq)
 		}
 	}
 	return minValueSeq, maxValueSeq, nil
 }
 
-// NewRedEnvelope 创建新红包
-func (handler *RedEnvelopeStorage) NewRedEnvelope(data *RedEnvelope, envelopes []int) (*RedEnvelope, error) {
+// NewLuckyMoney 创建新红包
+func (handler *LuckyMoneyStorage) NewLuckyMoney(data *LuckyMoney, luckyMoneyArr []int) (*LuckyMoney, error) {
 	err := blotDB.Update(func(tx *bolt.Tx) error {
 		// 生成红包ID
-		rootBucket, err := ensureBucketExists(tx, "red_envelopes")
+		rootBucket, err := ensureBucketExists(tx, "lucky_money")
 		if err != nil {
 			return err
 		}
-		if rootBucket.Sequence() < DefaultRenvelopesID {
-			if err = rootBucket.SetSequence(DefaultRenvelopesID); err != nil {
+		if rootBucket.Sequence() < DefaultLuckyMoneyID {
+			if err = rootBucket.SetSequence(DefaultLuckyMoneyID); err != nil {
 				return err
 			}
 		}
@@ -119,7 +119,7 @@ func (handler *RedEnvelopeStorage) NewRedEnvelope(data *RedEnvelope, envelopes [
 
 		// 插入基本信息
 		sid := strconv.FormatUint(data.ID, 10)
-		bucket, err := ensureBucketExists(tx, "red_envelopes", sid)
+		bucket, err := ensureBucketExists(tx, "lucky_money", sid)
 		if err != nil {
 			return err
 		}
@@ -129,13 +129,13 @@ func (handler *RedEnvelopeStorage) NewRedEnvelope(data *RedEnvelope, envelopes [
 		}
 
 		// 插入领取用户
-		_, err = ensureBucketExists(tx, "red_envelopes", sid, "users")
+		_, err = ensureBucketExists(tx, "lucky_money", sid, "users")
 		if err != nil {
 			return err
 		}
 
 		// 插入领取记录
-		minValueSeq, maxValueSeq, err := handler.newRecord(tx, sid, envelopes)
+		minValueSeq, maxValueSeq, err := handler.newRecord(tx, sid, luckyMoneyArr)
 		if err != nil {
 			return err
 		}
@@ -167,11 +167,11 @@ func (handler *RedEnvelopeStorage) NewRedEnvelope(data *RedEnvelope, envelopes [
 }
 
 // IsExpired 是否过期
-func (handler *RedEnvelopeStorage) IsExpired(id uint64) bool {
+func (handler *LuckyMoneyStorage) IsExpired(id uint64) bool {
 	var expired bool
 	sid := strconv.FormatUint(id, 10)
 	err := blotDB.View(func(tx *bolt.Tx) error {
-		bucket, err := getBucketIfExists(tx, "red_envelopes", sid)
+		bucket, err := getBucketIfExists(tx, "lucky_money", sid)
 		if err != nil {
 			return err
 		}
@@ -186,10 +186,10 @@ func (handler *RedEnvelopeStorage) IsExpired(id uint64) bool {
 }
 
 // SetExpired 设置过期
-func (handler *RedEnvelopeStorage) SetExpired(id uint64) error {
+func (handler *LuckyMoneyStorage) SetExpired(id uint64) error {
 	sid := strconv.FormatUint(id, 10)
 	return blotDB.Update(func(tx *bolt.Tx) error {
-		bucket, err := getBucketIfExists(tx, "red_envelopes", sid)
+		bucket, err := getBucketIfExists(tx, "lucky_money", sid)
 		if err != nil {
 			return err
 		}
@@ -198,11 +198,11 @@ func (handler *RedEnvelopeStorage) SetExpired(id uint64) error {
 }
 
 // IsReceived 是否已领取
-func (handler *RedEnvelopeStorage) IsReceived(id uint64, userID int64) (bool, error) {
+func (handler *LuckyMoneyStorage) IsReceived(id uint64, userID int64) (bool, error) {
 	received := false
 	sid := strconv.FormatUint(id, 10)
 	err := blotDB.View(func(tx *bolt.Tx) error {
-		bucket, err := getBucketIfExists(tx, "red_envelopes", sid, "users")
+		bucket, err := getBucketIfExists(tx, "lucky_money", sid, "users")
 		if err != nil {
 			return err
 		}
@@ -216,10 +216,10 @@ func (handler *RedEnvelopeStorage) IsReceived(id uint64, userID int64) (bool, er
 }
 
 // GetLastExpired 获取上次过期红包
-func (handler *RedEnvelopeStorage) GetLastExpired() (uint64, error) {
+func (handler *LuckyMoneyStorage) GetLastExpired() (uint64, error) {
 	var id uint64
 	err := blotDB.View(func(tx *bolt.Tx) error {
-		bucket, err := getBucketIfExists(tx, "red_envelopes")
+		bucket, err := getBucketIfExists(tx, "lucky_money")
 		if err != nil {
 			return err
 		}
@@ -243,10 +243,10 @@ func (handler *RedEnvelopeStorage) GetLastExpired() (uint64, error) {
 }
 
 // SetLastExpired 设置上次过期红包
-func (handler *RedEnvelopeStorage) SetLastExpired(id uint64) error {
+func (handler *LuckyMoneyStorage) SetLastExpired(id uint64) error {
 	sid := strconv.FormatUint(id, 10)
 	return blotDB.Update(func(tx *bolt.Tx) error {
-		bucket, err := getBucketIfExists(tx, "red_envelopes")
+		bucket, err := getBucketIfExists(tx, "lucky_money")
 		if err != nil {
 			return err
 		}
@@ -254,13 +254,13 @@ func (handler *RedEnvelopeStorage) SetLastExpired(id uint64) error {
 	})
 }
 
-// GetRedEnvelope 获取红包信息
-func (handler *RedEnvelopeStorage) GetRedEnvelope(id uint64) (*RedEnvelope, uint32, error) {
+// GetLuckyMoney 获取红包信息
+func (handler *LuckyMoneyStorage) GetLuckyMoney(id uint64) (*LuckyMoney, uint32, error) {
 	var received uint32
-	var base RedEnvelope
+	var base LuckyMoney
 	sid := strconv.FormatUint(id, 10)
 	err := blotDB.View(func(tx *bolt.Tx) error {
-		bucket, err := getBucketIfExists(tx, "red_envelopes", sid)
+		bucket, err := getBucketIfExists(tx, "lucky_money", sid)
 		if err != nil {
 			return err
 		}
@@ -289,22 +289,22 @@ func (handler *RedEnvelopeStorage) GetRedEnvelope(id uint64) (*RedEnvelope, uint
 	return &base, received, nil
 }
 
-// ActiveRedEnvelope 激活红包
-func (handler *RedEnvelopeStorage) ActiveRedEnvelope(id uint64, userID, chatID int64, messageID int32) error {
+// ActiveLuckyMoney 激活红包
+func (handler *LuckyMoneyStorage) ActiveLuckyMoney(id uint64, userID, chatID int64, messageID int32) error {
 	sid := strconv.FormatUint(id, 10)
 	return blotDB.Update(func(tx *bolt.Tx) error {
-		bucket, err := getBucketIfExists(tx, "red_envelopes", sid)
+		bucket, err := getBucketIfExists(tx, "lucky_money", sid)
 		if err != nil {
 			return err
 		}
 
 		// 检查状态
 		if bucket.Get([]byte("expired")) != nil {
-			return ErrRedEnvelopedExpired
+			return ErrLuckyMoneydExpired
 		}
 
 		// 获取红包基本信息
-		var base RedEnvelope
+		var base LuckyMoney
 		jsb := bucket.Get([]byte("base"))
 		if err = json.Unmarshal(jsb, &base); err != nil {
 			return err
@@ -330,15 +330,15 @@ func (handler *RedEnvelopeStorage) ActiveRedEnvelope(id uint64, userID, chatID i
 }
 
 // 领取红包
-func (handler *RedEnvelopeStorage) receiveRedEnvelope(tx *bolt.Tx, sid string, seq int,
-	user *RedEnvelopeUser) (int, error) {
+func (handler *LuckyMoneyStorage) receiveLuckyMoney(tx *bolt.Tx, sid string, seq int,
+	user *LuckyMoneyUser) (int, error) {
 
-	recordBucket, err := getBucketIfExists(tx, "red_envelopes", sid, "record")
+	recordBucket, err := getBucketIfExists(tx, "lucky_money", sid, "record")
 	if err != nil {
 		return 0, err
 	}
 
-	var record RedEnvelopeRecord
+	var record LuckyMoneyRecord
 	key := []byte(strconv.Itoa(seq))
 	jsb := recordBucket.Get(key)
 	if err = json.Unmarshal(jsb, &record); err != nil {
@@ -357,8 +357,8 @@ func (handler *RedEnvelopeStorage) receiveRedEnvelope(tx *bolt.Tx, sid string, s
 	return record.Value, nil
 }
 
-// ReceiveRedEnvelope 领取红包
-func (handler *RedEnvelopeStorage) ReceiveRedEnvelope(id uint64, userID int64,
+// ReceiveLuckyMoney 领取红包
+func (handler *LuckyMoneyStorage) ReceiveLuckyMoney(id uint64, userID int64,
 	firstName string) (int, int, error) {
 
 	received, err := handler.IsReceived(id, userID)
@@ -374,14 +374,14 @@ func (handler *RedEnvelopeStorage) ReceiveRedEnvelope(id uint64, userID int64,
 	count := 0
 	sid := strconv.FormatUint(id, 10)
 	err = blotDB.Update(func(tx *bolt.Tx) error {
-		bucket, err := getBucketIfExists(tx, "red_envelopes", sid)
+		bucket, err := getBucketIfExists(tx, "lucky_money", sid)
 		if err != nil {
 			return err
 		}
 
 		// 检查状态
 		if bucket.Get([]byte("expired")) != nil {
-			return ErrRedEnvelopedExpired
+			return ErrLuckyMoneydExpired
 		}
 
 		// 已领取数量
@@ -392,7 +392,7 @@ func (handler *RedEnvelopeStorage) ReceiveRedEnvelope(id uint64, userID int64,
 		}
 
 		// 红包是否充足
-		var base RedEnvelope
+		var base LuckyMoney
 		jsb := bucket.Get([]byte("base"))
 		if err = json.Unmarshal(jsb, &base); err != nil {
 			return err
@@ -407,7 +407,7 @@ func (handler *RedEnvelopeStorage) ReceiveRedEnvelope(id uint64, userID int64,
 		}
 
 		// 是否重复领取
-		usersBucket, err := getBucketIfExists(tx, "red_envelopes", sid, "users")
+		usersBucket, err := getBucketIfExists(tx, "lucky_money", sid, "users")
 		if err != nil {
 			return err
 		}
@@ -418,7 +418,7 @@ func (handler *RedEnvelopeStorage) ReceiveRedEnvelope(id uint64, userID int64,
 
 		// 执行领取红包
 		newSeq := numReceived + 1
-		value, err = handler.receiveRedEnvelope(tx, sid, newSeq, &RedEnvelopeUser{
+		value, err = handler.receiveLuckyMoney(tx, sid, newSeq, &LuckyMoneyUser{
 			UserID:    userID,
 			FirstName: firstName,
 		})
@@ -452,12 +452,12 @@ func (handler *RedEnvelopeStorage) ReceiveRedEnvelope(id uint64, userID int64,
 }
 
 // GetTwoTxtremes 获取两个极端
-func (handler *RedEnvelopeStorage) GetTwoTxtremes(id uint64) (*RedEnvelopeRecord, *RedEnvelopeRecord, error) {
-	var minRecord RedEnvelopeRecord
-	var maxRecord RedEnvelopeRecord
+func (handler *LuckyMoneyStorage) GetTwoTxtremes(id uint64) (*LuckyMoneyRecord, *LuckyMoneyRecord, error) {
+	var minRecord LuckyMoneyRecord
+	var maxRecord LuckyMoneyRecord
 	sid := strconv.FormatUint(id, 10)
 	err := blotDB.View(func(tx *bolt.Tx) error {
-		bucket, err := getBucketIfExists(tx, "red_envelopes", sid)
+		bucket, err := getBucketIfExists(tx, "lucky_money", sid)
 		if err != nil {
 			return err
 		}
@@ -470,7 +470,7 @@ func (handler *RedEnvelopeStorage) GetTwoTxtremes(id uint64) (*RedEnvelopeRecord
 		}
 
 		// 获取红包序列号信息
-		recordBucket, err := getBucketIfExists(tx, "red_envelopes", sid, "record")
+		recordBucket, err := getBucketIfExists(tx, "lucky_money", sid, "record")
 		if err != nil {
 			return err
 		}
@@ -496,11 +496,11 @@ func (handler *RedEnvelopeStorage) GetTwoTxtremes(id uint64) (*RedEnvelopeRecord
 	return &minRecord, &maxRecord, nil
 }
 
-// ForeachRedEnvelopes 遍历红包列表
-func (handler *RedEnvelopeStorage) ForeachRedEnvelopes(startID uint64, callback func(*RedEnvelope)) error {
-	var base RedEnvelope
+// ForeachLuckyMoney 遍历红包列表
+func (handler *LuckyMoneyStorage) ForeachLuckyMoney(startID uint64, callback func(*LuckyMoney)) error {
+	var base LuckyMoney
 	return blotDB.View(func(tx *bolt.Tx) error {
-		rootBucket, err := getBucketIfExists(tx, "red_envelopes")
+		rootBucket, err := getBucketIfExists(tx, "lucky_money")
 		if err != nil {
 			return err
 		}

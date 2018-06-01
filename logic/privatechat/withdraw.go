@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/zhangpanyi/botcasino/config"
-	"github.com/zhangpanyi/botcasino/envelopes/feessync"
+	"github.com/zhangpanyi/botcasino/logic/syncfee"
 	"github.com/zhangpanyi/botcasino/models"
 	"github.com/zhangpanyi/botcasino/remote"
 	"github.com/zhangpanyi/botcasino/storage"
@@ -200,7 +200,7 @@ func (handler *WithdrawHandler) handleEnterWithdrawAmount(bot *methods.BotExt, r
 	// 检查输入金额
 	result := strings.Split(amount, ".")
 	if len(result) == 2 && len(result[1]) > 2 {
-		fee, _ := feessync.GetFee(storage.GetAssetSymbol(info.asset))
+		fee, _ := syncfee.GetFee(storage.GetAssetSymbol(info.asset))
 		reply := tr(fromID, "lng_priv_withdraw_amount_not_enough")
 		handlerError(fmt.Sprintf(reply, info.asset, bitCNY, bitUSD,
 			fmt.Sprintf("%.2f", float64(fee)/100.0), info.asset))
@@ -209,7 +209,7 @@ func (handler *WithdrawHandler) handleEnterWithdrawAmount(bot *methods.BotExt, r
 
 	fAmount, err := strconv.ParseFloat(amount, 10)
 	if err != nil {
-		fee, _ := feessync.GetFee(storage.GetAssetSymbol(info.asset))
+		fee, _ := syncfee.GetFee(storage.GetAssetSymbol(info.asset))
 		reply := tr(fromID, "lng_priv_withdraw_amount_not_enough")
 		handlerError(fmt.Sprintf(reply, info.asset, bitCNY, bitUSD,
 			fmt.Sprintf("%.2f", float64(fee)/100.0), info.asset))
@@ -219,7 +219,7 @@ func (handler *WithdrawHandler) handleEnterWithdrawAmount(bot *methods.BotExt, r
 	// 检查用户余额
 	lAmount := uint32(fAmount * 100)
 	newHandler := storage.AssetStorage{}
-	fee, _ := feessync.GetFee(storage.GetAssetSymbol(info.asset))
+	fee, _ := syncfee.GetFee(storage.GetAssetSymbol(info.asset))
 	asset, err := newHandler.GetAsset(fromID, storage.GetAssetSymbol(info.asset))
 	if err != nil || asset.Amount < (lAmount+fee) {
 		reply := tr(fromID, "lng_priv_withdraw_amount_error")
@@ -258,7 +258,7 @@ func (handler *WithdrawHandler) handleWithdrawAmount(bot *methods.BotExt, r *his
 	}
 	markup := methods.MakeInlineKeyboardMarkupAuto(menus[:], 1)
 
-	fee, _ := feessync.GetFee(storage.GetAssetSymbol(info.asset))
+	fee, _ := syncfee.GetFee(storage.GetAssetSymbol(info.asset))
 	bitCNY := getUserAssetAmount(fromID, storage.BitCNYSymbol)
 	bitUSD := getUserAssetAmount(fromID, storage.BitUSDSymbol)
 	reply := tr(fromID, "lng_priv_withdraw_enter_amount")
@@ -351,7 +351,7 @@ func (handler *WithdrawHandler) handleWithdrawOverview(bot *methods.BotExt, r *h
 	answer := tr(fromID, "lng_priv_withdraw_overview_answer")
 	bot.AnswerCallbackQuery(update.CallbackQuery, answer, false, "", 0)
 
-	fee, _ := feessync.GetFee(storage.GetAssetSymbol(info.asset))
+	fee, _ := syncfee.GetFee(storage.GetAssetSymbol(info.asset))
 	sfee := fmt.Sprintf("%.2f", float64(fee)/100.0)
 	reply := tr(fromID, "lng_priv_withdraw_overview")
 	amount := fmt.Sprintf("%.2f", float64(info.amount)/100.0)
@@ -392,7 +392,7 @@ func (handler *WithdrawHandler) handleWithdraw(bot *methods.BotExt, r *history.H
 
 	// 获取手续费
 	asset := storage.GetAssetSymbol(info.asset)
-	fee, _ := feessync.GetFee(asset)
+	fee, _ := syncfee.GetFee(asset)
 
 	// 扣除余额
 	newHandler := storage.AssetStorage{}
